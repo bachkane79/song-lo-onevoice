@@ -68,7 +68,16 @@ class Display(object):
 class ConsoleDisplay(Display):
     """In ra terminal — mặc định khi chưa gắn màn hình thật.
 
-    Bố cục mỗi câu (nguồn ở trên, bản dịch nổi bật ở dưới)::
+    Hai bố cục, chọn bằng `layout`:
+
+    ``"compact"`` (mặc định) — đúng **2 dòng** mỗi câu, để log chạy thật với
+    micro còn đọc được. Số thứ tự câu và thời gian dồn vào cuối dòng dịch::
+
+        🇨🇳 STT   你好，请问厕所在哪里？
+        🇻🇳 DỊCH  Xin chào, xin hỏi nhà vệ sinh ở đâu?   #003 · 2.4s nói · 0.70s xử lý
+
+    ``"full"`` — bố cục cũ, có đường kẻ và dòng tiêu đề riêng, dễ nhìn khi chạy
+    `--wav` hoặc `--offline` (ít câu, không bị VAD chen ngang)::
 
         ──────────────────────────────────────────────
         #003  🇨🇳 中文  ·  2.4s nói  ·  0.7s xử lý
@@ -81,7 +90,7 @@ class ConsoleDisplay(Display):
         "\033[2m", "\033[1m", "\033[36m", "\033[33m", "\033[0m")
 
     def __init__(self, stream=None, color=None, show_timing=True, width=62,
-                 show_route=False):
+                 show_route=False, layout="compact"):
         self.stream = stream or sys.stdout
         if color is None:
             color = hasattr(self.stream, "isatty") and self.stream.isatty()
@@ -89,6 +98,7 @@ class ConsoleDisplay(Display):
         self.show_timing = show_timing
         self.show_route = show_route
         self.width = width
+        self.layout = layout
         if hasattr(self.stream, "reconfigure"):
             try:
                 self.stream.reconfigure(encoding="utf-8", errors="replace")
@@ -99,6 +109,33 @@ class ConsoleDisplay(Display):
         return "%s%s%s" % (code, text, self._RESET) if self.color else text
 
     def show(self, event):
+        if self.layout == "compact":
+            return self._show_compact(event)
+        return self._show_full(event)
+
+    def _show_compact(self, event):
+        """Hai dòng: câu nghe được, rồi bản dịch."""
+        out = self.stream
+        src_flag = _FLAG.get(event.src_lang, "❓")
+        tgt_flag = _FLAG.get(event.tgt_lang, "❓")
+
+        meta = "#%03d" % event.seq
+        if self.show_timing:
+            meta += " · %.1fs nói · %.2fs xử lý (STT %.0fms + dịch %.0fms)" % (
+                event.audio_duration_s, event.total_ms / 1000.0,
+                event.stt_ms, event.mt_ms)
+            if event.lag_ratio > 1.0:
+                meta += " ⚠️ chậm hơn tốc độ nói"
+
+        out.write("%s %s  %s\n" % (src_flag, self._c(self._DIM, "STT  "),
+                                   self._c(self._CYAN, event.source_text)))
+        out.write("%s %s  %s   %s\n" % (tgt_flag, self._c(self._DIM, "DỊCH "),
+                                        self._c(self._BOLD, event.target_text),
+                                        self._c(self._DIM, meta)))
+        self._show_extras(event, out)
+        out.flush()
+
+    def _show_full(self, event):
         head = "#%03d  %s %s" % (event.seq, _FLAG.get(event.src_lang, "❓"),
                                  _LANG_LABEL.get(event.src_lang, "?"))
         if self.show_timing:
@@ -113,6 +150,11 @@ class ConsoleDisplay(Display):
         out.write(self._c(self._DIM, head) + "\n")
         out.write("  " + self._c(self._CYAN, event.source_text) + "\n")
         out.write(self._c(self._BOLD, "→ " + event.target_text) + "\n")
+        self._show_extras(event, out)
+        out.flush()
+
+    def _show_extras(self, event, out):
+        """Phần phụ dùng chung cho cả hai bố cục: định tuyến + cảnh báo."""
         if self.show_route and event.stt_detail:
             d = event.stt_detail
             out.write(self._c(self._DIM,
@@ -123,7 +165,6 @@ class ConsoleDisplay(Display):
                                  (d.get("vi_text") or "")[:52])) + "\n")
         for w in event.warnings:
             out.write(self._c(self._YELLOW, "  ⚠️  " + w) + "\n")
-        out.flush()
 
     def show_status(self, message):
         self.stream.write(self._c(self._DIM, message) + "\n")

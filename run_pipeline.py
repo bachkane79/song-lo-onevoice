@@ -24,6 +24,7 @@ import sys
 
 from onevoice.config import PipelineConfig
 from onevoice.display import CompositeDisplay, ConsoleDisplay, JsonlDisplay
+from onevoice.mic import MicNotFound
 from onevoice.pipeline import OneVoicePipeline
 from onevoice.stt import create_stt_engine
 
@@ -38,13 +39,24 @@ BANNER = """
 
 
 def list_devices():
-    import sounddevice as sd
+    """Liệt kê micro kèm kết quả **mở thử** — ✓ là chắc chắn thu được.
+
+    Chỉ liệt kê tên thì vô dụng: thiết bị "có mặt" mà không mở được là trường
+    hợp hay gặp nhất trên Windows (Stereo Mix tắt, mic bị app khác chiếm).
+    """
+    from onevoice.mic import input_devices, pick_input_device, probe_device
+
     print("Các thiết bị đầu vào:")
-    for idx, dev in enumerate(sd.query_devices()):
-        if dev["max_input_channels"] > 0:
-            print("  [%2d] %-45s %d kênh @ %.0f Hz"
-                  % (idx, dev["name"][:45], dev["max_input_channels"],
-                     dev["default_samplerate"]))
+    for idx, dev in input_devices():
+        print("  %s [%2d] %-45s %d kênh @ %.0f Hz"
+              % ("✓" if probe_device(idx) else "✗", idx, dev["name"][:45],
+                 dev["max_input_channels"], dev["default_samplerate"]))
+    try:
+        chosen, name = pick_input_device()
+        print("\n→ Bỏ --device thì pipeline tự chọn: [%d] %s" % (chosen, name))
+    except Exception as exc:        # noqa: BLE001
+        print("\n❌ %s" % exc)
+        return 1
     return 0
 
 
@@ -88,16 +100,51 @@ def build_args():
                    help="Tắt bảng chuẩn hóa <unk> tiếng Hoa (để so sánh)")
 
     g = ap.add_argument_group("Âm thanh")
-    g.add_argument("--device", type=int, default=None, help="ID micro")
+    g.add_argument("--device", type=int, default=None,
+                   help="Khóa cứng ID micro (mặc định: tự dò micro mở được)")
     g.add_argument("--vad-threshold", type=float, default=None)
     g.add_argument("--save-wav", action="store_true",
                    help="Lưu từng câu ra output_segments/ (chỉ để debug)")
+
+    g = ap.add_argument_group(
+        "Cắt câu (Segmenter)",
+        "Câu bị đứt giữa chừng → tăng --silence-timeout. Câu dính vào nhau / "
+        "toàn ra khối 8s → giảm --silence-timeout hoặc --max-seg. "
+        "Đo trước khi chỉnh: python scripts/diag_vad.py")
+    g.add_argument("--silence-timeout", type=float, default=None, metavar="S",
+                   help="Im lặng bao lâu thì chốt câu (mặc định 0.7). "
+                        "Cộng thẳng vào độ trễ của MỌI câu.")
+    g.add_argument("--max-seg", type=float, default=None, metavar="S",
+                   help="Ép cắt cứng khi câu vượt quá (mặc định 8.0)")
+    g.add_argument("--energy-valley", action="store_true",
+                   help="Bật lại tầng Energy Valley (mặc định TẮT — AGC của "
+                        "VAD_process san phẳng dải động nên nó cắt giữa câu; "
+                        "xem onevoice/config.py). Chỉ bật sau khi diag_vad.py "
+                        "cho thấy năng lượng lúc im thấp hơn hẳn lúc nói.")
+    g.add_argument("--min-seg", type=float, default=None, metavar="S",
+                   help="Chỉ dùng khi --energy-valley: câu chưa đủ dài thì "
+                        "không tìm valley (mặc định 2.5)")
+    g.add_argument("--valley-frames", type=int, default=None, metavar="N",
+                   help="Chỉ dùng khi --energy-valley: cần N frame 32ms năng "
+                        "lượng thấp liên tiếp mới cắt (mặc định 8 = 256ms)")
+    g.add_argument("--valley-ratio", type=float, default=None, metavar="R",
+                   help="Chỉ dùng khi --energy-valley: năng lượng phải hụt "
+                        "dưới R lần đỉnh (mặc định 0.12)")
+    g.add_argument("--min-utterance", type=float, default=None, metavar="S",
+                   help="Bỏ mẩu ngắn hơn (mặc định 0.4) — chặn mảnh vụn "
+                        "Segmenter nhả qua nhánh Silence Timeout")
 
     g = ap.add_argument_group("Hiển thị")
     g.add_argument("--log-jsonl", metavar="FILE",
                    help="Ghi mỗi câu thành 1 dòng JSON để phân tích sau")
     g.add_argument("--no-timing", action="store_true",
                    help="Ẩn thông tin độ trễ trên màn hình")
+    g.add_argument("--layout", choices=["compact", "full"], default=None,
+                   help="compact = 2 dòng/câu (mặc định khi chạy micro); "
+                        "full = bố cục có đường kẻ (mặc định cho --wav/--offline)")
+    g.add_argument("--verbose", action="store_true",
+                   help="Hiện lại log gốc của VAD/Segmenter (visualizer từng "
+                        "frame) — chỉ dùng khi gỡ lỗi phần cứng âm thanh")
     return ap
 
 
@@ -127,6 +174,25 @@ def main():
         cfg.mic_device_id = args.device
     if args.vad_threshold is not None:
         cfg.vad_threshold = args.vad_threshold
+    if args.silence_timeout is not None:
+        cfg.silence_timeout = args.silence_timeout
+    if args.min_seg is not None:
+        cfg.min_segment_duration = args.min_seg
+    if args.max_seg is not None:
+        cfg.max_segment_duration = args.max_seg
+    if args.valley_frames is not None:
+        cfg.valley_min_frames = args.valley_frames
+    if args.valley_ratio is not None:
+        cfg.valley_ratio = args.valley_ratio
+    if args.energy_valley:
+        cfg.use_energy_valley = True
+    if args.min_utterance is not None:
+        cfg.min_utterance_s = args.min_utterance
+    if args.verbose:
+        # Trả lại nguyên trạng log của VAD-Segmenter; lúc đó "lượt nói" do ta in
+        # sẽ lẫn vào visualizer nên tắt luôn cho khỏi rối.
+        cfg.quiet_vad_output = False
+        cfg.log_vad_turns = False
     cfg.save_wav_debug = args.save_wav
     if args.beam is not None:
         cfg.translate.beam_size = args.beam
@@ -158,8 +224,10 @@ def main():
         print("→ Chạy tạm không cần STT: python run_pipeline.py --offline")
         return 1
 
+    # Micro: log chạy dài, cần gọn. --wav/--offline: ít câu, bố cục cũ dễ đọc hơn.
+    layout = args.layout or ("full" if (args.wav or args.offline) else "compact")
     display = ConsoleDisplay(show_timing=not args.no_timing,
-                             show_route=args.show_route)
+                             show_route=args.show_route, layout=layout)
     if args.log_jsonl:
         display = CompositeDisplay(display, JsonlDisplay(args.log_jsonl))
 
@@ -177,6 +245,11 @@ def main():
 
     try:
         pipeline.run()
+    except MicNotFound as exc:
+        print("❌ %s" % exc)
+        print("   → Xem danh sách: python run_pipeline.py --list-devices")
+        print("   → Hoặc chạy không cần micro: python run_pipeline.py --offline")
+        return 1
     except ImportError as exc:
         print("❌ Thiếu thư viện âm thanh: %s" % exc)
         print("   → pip install -r requirements.txt")

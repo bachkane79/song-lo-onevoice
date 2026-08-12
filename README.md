@@ -29,6 +29,23 @@ python scripts/setup.py          # tự tải toàn bộ model (~655 MB) + kiể
 python run_pipeline.py           # xong — nói vào micro
 ```
 
+Trên Windows dùng `start.bat` để chạy **một lệnh duy nhất** — tự lo `.venv`,
+UTF-8 cho console, và tải model nếu thiếu:
+
+```powershell
+.\start.bat                      # zh ⇄ vi tự nhận diện
+.\start.bat --force-lang zh      # khóa chiều zh → vi
+```
+
+Micro **tự nhận**, không cần `--device`. Log mặc định gọn — mỗi câu 2 dòng:
+
+```
+🎙️  ▶ Lượt 3 — có tiếng nói
+🔇  ■ Lượt 3 — im lặng, hết lượt (2.1s nói)
+🇨🇳 STT    开饭时间早上9点至下午5点。
+🇻🇳 DỊCH   Bữa sáng 9h đến 5h.   #003 · 2.4s nói · 0.31s xử lý (STT 162ms + dịch 150ms)
+```
+
 `setup.py` tải STT từ Hugging Face và model dịch từ GitHub Release của repo này,
 **kiểm tra sha256 từng file** rồi dịch thử một câu mỗi chiều. Chạy lại nhiều lần
 vô hại — file nào đã đúng thì bỏ qua.
@@ -43,6 +60,30 @@ python scripts/setup.py --check                        # kiểm tra không tải
 
 Trên Jetson: đọc [docs/JETSON_SETUP.md](docs/JETSON_SETUP.md) trước — bản Jetson
 Nano đời cũ (Python 3.6) cần xử lý riêng.
+
+---
+
+## 🎧 Micro & cắt câu
+
+**Câu bị đứt giữa chừng, hoặc toàn ra khối 8s?** Đọc
+[docs/AUDIO_TUNING.md](docs/AUDIO_TUNING.md) — có bảng tra triệu chứng → cách xử lý.
+
+Hai điều đáng biết trước:
+
+* **Energy Valley (tầng 2 của Segmenter) tắt mặc định.** AGC trong `VAD_process`
+  kéo mọi thứ về biên độ 0.3, nên năng lượng lúc im (0.101) gần bằng lúc nói
+  (0.124) — đúng cái dải động mà tầng đó cần đã bị san phẳng, không có
+  `valley_ratio` nào chạy đúng. Dựa vào VAD silence thay thế (0.031 vs 0.891,
+  tách rất rõ). Bật lại bằng `--energy-valley` sau khi đo trên mic mới.
+* **Phòng ồn là vấn đề khác hẳn** — VAD không bao giờ im nên mọi câu chạm trần
+  8s. Chỉnh Segmenter vô ích, phải nâng `--vad-threshold 0.9`.
+
+Đo trước khi chỉnh, đừng chỉnh theo cảm giác:
+
+```bash
+python scripts/diag_vad.py       # đo VAD prob + năng lượng, tự gợi ý tham số
+python run_pipeline.py --list-devices   # ✓/✗ theo kết quả mở thử từng mic
+```
 
 ---
 
@@ -100,6 +141,7 @@ tr.translate("Tôi muốn đi Đà Nẵng.", "vi").target  # → 我想去岘港
 ## 📁 Cấu trúc
 
 ```
+start.bat               chạy một lệnh trên Windows (venv + UTF-8 + model)
 VAD-Segmenter/          Module 1 & 2 (giữ nguyên, không sửa)
 onevoice/
   config.py             mọi tham số + override bằng biến môi trường
@@ -109,12 +151,15 @@ onevoice/
   langid.py             nhận diện zh/vi theo hệ chữ viết (dự phòng)
   glossary.py           địa danh Hán-Việt, thay ở đầu vào (vi→zh)
   zh_norm.py            vá ký tự ngoài vocab (zh→vi)
+  mic.py                tự chọn micro (mở thử từng thiết bị)
+  vadlog.py             lọc log ồn của VAD-Segmenter + gộp lượt nói
   display.py            hiển thị
   pipeline.py           điều phối, worker thread, chính sách quá tải
   data/                 bảng địa danh + bảng chuẩn hóa <unk>
 scripts/
   download_stt.py       tải model STT
   prepare_model.py      copy + verify model dịch
+  diag_vad.py           đo VAD + năng lượng trên mic thật (chạy trước khi chỉnh)
   bench_stt.py          đo RTF + chấm điểm định tuyến ngôn ngữ
   bench_translate.py    đo tốc độ dịch trên thiết bị thật
   audit_vocab.py        tìm ký tự model không đọc được
@@ -123,6 +168,7 @@ tests/                  78 test, tự bỏ qua phần cần model
 docs/
   STT_GUIDE.md          STT + luật định tuyến ngôn ngữ
   TRANSLATE_GUIDE.md    máy dịch + hạn chế đã biết
+  AUDIO_TUNING.md       micro, VAD, cắt câu — số đo + bảng tra triệu chứng
   JETSON_SETUP.md       cài đặt và nhúng lên Jetson
 models/                 model (KHÔNG commit — xem .gitignore)
 ```

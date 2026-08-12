@@ -35,8 +35,10 @@ from dataclasses import dataclass
 from onevoice.config import PipelineConfig, repo_root
 from onevoice.display import ConsoleDisplay, DisplayEvent
 from onevoice.langid import detect_lang
+from onevoice.mic import pick_input_device
 from onevoice.stt import MockSttEngine
 from onevoice.translate import NllbTranslator
+from onevoice.vadlog import VadTurnLogger, muted_stdout
 
 __all__ = ["OneVoicePipeline", "Utterance", "load_vad_segmenter"]
 
@@ -91,38 +93,65 @@ class OneVoicePipeline(object):
         self._worker = None
         self._running = False
         self._seq = 0
+        self.vad_turns = None       # chỉ có ở chế độ micro, gán trong run()
 
         # Thống kê để đánh giá thiết bị chạy có kịp không
         self.stats = {"segments": 0, "dropped": 0, "translated": 0,
-                      "stt_empty": 0, "errors": 0, "unknown_lang": 0}
+                      "stt_empty": 0, "errors": 0, "unknown_lang": 0,
+                      "too_short": 0}
 
     # ── Khởi động / dừng ────────────────────────────────────────────────────
     def run(self):
-        """Chạy pipeline với micro thật. Chặn cho tới khi Ctrl+C."""
+        """Chạy pipeline với micro thật. Chặn cho tới khi Ctrl+C.
+
+        Micro được **chọn và mở thử trước khi nạp model** (xem `onevoice/mic.py`):
+        thiết bị hỏng thì báo ngay trong 1 giây, thay vì để người dùng chờ nạp
+        655 MB model rồi mới đổ lỗi luồng âm thanh.
+        """
         SileroVADDetector, AudioSegmenter = load_vad_segmenter()
         cfg = self.config
+
+        device_id, device_name = pick_input_device(cfg.mic_device_id)
+        self.display.show_status("🎙️ Micro   : [%d] %s%s"
+                                 % (device_id, device_name,
+                                    "" if cfg.mic_device_id is not None
+                                    else "   (tự nhận)"))
 
         self._start_worker()
         self.display.show_status("🔤 Máy dịch: %s" % _fmt_stats(self.translator.stats()))
         self.display.show_status("🎤 STT     : %s" % _describe_stt(self.stt))
+        self.display.show_status(
+            "\n🚀 Sẵn sàng — nói tiếng Việt hoặc tiếng Hoa vào micro (Ctrl+C để dừng)")
 
         segmenter = AudioSegmenter(
             sample_rate=16000,
             silence_timeout=cfg.silence_timeout,
             min_segment_duration=cfg.min_segment_duration,
             max_segment_duration=cfg.max_segment_duration,
-            valley_ratio=cfg.valley_ratio,
+            # ratio 0.0 làm điều kiện `energy < ratio * peak` không bao giờ đúng
+            # → tắt sạch tầng Energy Valley mà không phải sửa Segmenter_process.
+            valley_ratio=cfg.valley_ratio if cfg.use_energy_valley else 0.0,
             valley_min_frames=cfg.valley_min_frames,
             on_segment_ready=self.on_segment_ready,
             save_wav_debug=cfg.save_wav_debug,
         )
-        vad = SileroVADDetector(
-            threshold=cfg.vad_threshold,
-            device_id=cfg.mic_device_id,
-            on_vad_frame=segmenter.process_vad_frame,
-        )
+        # Gộp frame VAD thành "lượt nói" để log gọn; hangover khớp silence_timeout
+        # nên mốc "hết lượt" trùng đúng lúc Segmenter chốt câu.
+        self.vad_turns = VadTurnLogger(self.display,
+                                       hangover_s=cfg.silence_timeout,
+                                       enabled=cfg.log_vad_turns)
         try:
-            vad.start()          # chặn ở đây, tự bắt KeyboardInterrupt bên trong
+            # Bịt visualizer 31 dòng/giây của VAD-Segmenter (không sửa file của
+            # họ). Lỗi và cảnh báo luồng âm thanh vẫn lọt qua.
+            # Bọc cả lúc KHỞI TẠO: `SileroVADDetector.__init__` in 3 dòng banner
+            # lặp lại đúng thông tin micro ta vừa in ở trên.
+            with muted_stdout(enabled=cfg.quiet_vad_output):
+                vad = SileroVADDetector(
+                    threshold=cfg.vad_threshold,
+                    device_id=device_id,
+                    on_vad_frame=self.vad_turns.wrap(segmenter.process_vad_frame),
+                )
+                vad.start()      # chặn ở đây, tự bắt KeyboardInterrupt bên trong
         finally:
             self.stop()
 
@@ -162,12 +191,18 @@ class OneVoicePipeline(object):
         self._running = False
         if self._worker is not None:
             self._worker.join(timeout=5.0)
+        turns = "%d lượt nói · " % self.vad_turns.turns if self.vad_turns else ""
         self.display.show_status(
-            "\n📊 %d câu · %d đã dịch · %d bỏ do quá tải · %d lỗi"
-            % (self.stats["segments"], self.stats["translated"],
+            "\n📊 %s%d câu · %d đã dịch · %d bỏ do quá tải · %d lỗi"
+            % (turns, self.stats["segments"], self.stats["translated"],
                self.stats["dropped"], self.stats["errors"]))
         if hasattr(self.stt, "summary"):
             self.display.show_status("   %s" % self.stt.summary())
+        if self.stats["too_short"]:
+            self.display.show_status(
+                "   %d mẩu <%.1fs bị bỏ (Segmenter cắt vụn). Nếu mất cả câu trả "
+                "lời ngắn thật thì hạ --min-utterance."
+                % (self.stats["too_short"], self.config.min_utterance_s))
         if self.stats["dropped"]:
             self.display.show_status(
                 "   ⚠️  Có câu bị bỏ → thiết bị xử lý không kịp tốc độ nói. "
@@ -180,7 +215,17 @@ class OneVoicePipeline(object):
 
         Chỉ đẩy vào hàng đợi rồi trả về ngay lập tức. Tuyệt đối không xử lý gì
         nặng ở đây — xem docstring module.
+
+        Chặn mẩu quá ngắn ngay tại đây: nhánh Silence Timeout của Segmenter
+        không kiểm tra `min_segment_duration` (nó chỉ chặn tầng Energy Valley),
+        nên phần đuôi ~150ms mà valley để lại có thể ra thành "câu" 0.2s. STT
+        nghe ra một thán từ vô nghĩa, máy dịch vẫn tốn 100ms dịch nó, và nó
+        chiếm một chỗ trong hàng đợi 4 slot của câu thật.
         """
+        if duration_sec < self.config.min_utterance_s:
+            self.stats["too_short"] += 1
+            return
+
         self._seq += 1
         self.stats["segments"] += 1
         item = Utterance(seq=self._seq, audio=audio, sample_rate=sample_rate,
