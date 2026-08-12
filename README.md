@@ -20,22 +20,25 @@ Không gọi API, không cần mạng.
 
 ---
 
-## 🚀 Chạy trong 3 lệnh
+## 🚀 Chạy trong 2 lệnh
 
 ```bash
 pip install -r requirements.txt
+python scripts/setup.py          # tự tải toàn bộ model (~655 MB) + kiểm tra + chạy thử
 
-python scripts/download_stt.py                        # STT 258 MB, tự tải
-python scripts/prepare_model.py --source <thư mục có ct2/nllb-trim-int8>   # dịch 394 MB
-
-python run_pipeline.py                                # xong — nói vào micro
+python run_pipeline.py           # xong — nói vào micro
 ```
+
+`setup.py` tải STT từ Hugging Face và model dịch từ GitHub Release của repo này,
+**kiểm tra sha256 từng file** rồi dịch thử một câu mỗi chiều. Chạy lại nhiều lần
+vô hại — file nào đã đúng thì bỏ qua.
 
 Kiểm tra từng phần khi chưa có micro:
 
 ```bash
 python run_pipeline.py --wav a.wav b.wav --show-route  # STT + dịch trên file thật
 python run_pipeline.py --offline                       # chỉ tầng dịch + hiển thị
+python scripts/setup.py --check                        # kiểm tra không tải lại
 ```
 
 Trên Jetson: đọc [docs/JETSON_SETUP.md](docs/JETSON_SETUP.md) trước — bản Jetson

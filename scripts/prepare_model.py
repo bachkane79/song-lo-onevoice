@@ -1,25 +1,24 @@
-"""Đưa model dịch vào repo / vào thiết bị Jetson.
+"""Đưa model dịch vào `models/mt/` — tải từ mạng hoặc copy từ thư mục có sẵn.
 
 Model 394 MB **không commit vào git được** (GitHub giới hạn 100 MB/file), nên nó
-được copy vào `models/mt/` — thư mục đã có trong `.gitignore`. Script này làm việc
-copy đó và verify nội dung.
+được phát hành qua **GitHub Release** và script này tải về + kiểm tra sha256.
+
+    python scripts/prepare_model.py              # tải về (mặc định)
+    python scripts/prepare_model.py --source DIR # copy từ thư mục có sẵn
+    python scripts/prepare_model.py --verify-only
 
 Chỉ cần đúng 2 thứ để chạy máy dịch (tổng ~397 MB):
 
     models/mt/nllb-zhvi-int8/{model.bin, config.json, shared_vocabulary.json}
     models/mt/tokenizer.json
 
-Dùng trên máy dev (lấy từ thư mục benchmark test-mt):
-
-    python scripts/prepare_model.py --source D:\\Coding\\BK\\test-mt
-
-Dùng trên Jetson (sau khi scp thư mục sang):
-
-    python3 scripts/prepare_model.py --source ~/onevoice-model
-    python3 scripts/prepare_model.py --verify-only
+**Vì sao phải kiểm tra sha256**: file `model.bin` tải thiếu hoặc hỏng vẫn nạp
+được vào CTranslate2 và vẫn dịch ra chữ — chỉ là dịch ra rác. Không có bước
+kiểm tra thì lỗi này chỉ lộ ra khi người dùng cuối đọc bản dịch.
 """
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -27,7 +26,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from onevoice.config import DEFAULT_MT_MODEL_DIR, DEFAULT_MT_TOKENIZER  # noqa: E402
+from onevoice.config import (  # noqa: E402
+    DEFAULT_MT_MODEL_DIR,
+    DEFAULT_MT_TOKENIZER,
+    DEFAULT_MT_RELEASE,
+)
 
 CT2_FILES = ("model.bin", "config.json", "shared_vocabulary.json")
 
@@ -52,6 +55,121 @@ def _mb(path):
         return os.path.getsize(path) / 1024.0 ** 2
     return sum(os.path.getsize(os.path.join(dp, f))
                for dp, _, fs in os.walk(path) for f in fs) / 1024.0 ** 2
+
+
+def sha256_of(path, chunk=1 << 20):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(chunk), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def load_release_manifest(path=None):
+    with open(path or DEFAULT_MT_RELEASE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def download(url, dest, expect_size=None, expect_sha=None, force=False):
+    """Tải một file kèm thanh tiến trình, kiểm tra sha256 sau khi tải xong.
+
+    Tải vào file tạm `.part` rồi mới đổi tên: nếu mạng đứt giữa chừng thì lần sau
+    sẽ tải lại chứ không để lại một file cụt trông như đã tải xong.
+    """
+    import urllib.error
+    import urllib.request
+
+    if os.path.isfile(dest) and not force:
+        if expect_sha and sha256_of(dest) == expect_sha:
+            print("   ⏭  %-24s đã có, sha256 khớp" % os.path.basename(dest))
+            return True
+        print("   ♻️  %-24s đã có nhưng sai sha256 → tải lại"
+              % os.path.basename(dest))
+
+    os.makedirs(os.path.dirname(os.path.abspath(dest)), exist_ok=True)
+    tmp = dest + ".part"
+    name = os.path.basename(dest)
+    try:
+        with urllib.request.urlopen(url, timeout=60) as resp:
+            total = int(resp.headers.get("Content-Length") or expect_size or 0)
+            done = 0
+            with open(tmp, "wb") as out:
+                while True:
+                    block = resp.read(1 << 20)
+                    if not block:
+                        break
+                    out.write(block)
+                    done += len(block)
+                    if total:
+                        pct = 100.0 * done / total
+                        sys.stdout.write("\r   ⬇  %-24s %5.1f%%  (%.1f/%.1f MB)"
+                                         % (name, pct, done / 1024.0 ** 2,
+                                            total / 1024.0 ** 2))
+                        sys.stdout.flush()
+        if total:
+            sys.stdout.write("\r" + " " * 78 + "\r")
+            sys.stdout.flush()
+    except urllib.error.HTTPError as exc:
+        _cleanup(tmp)
+        if exc.code == 404:
+            print("   ❌ %s: không tìm thấy trên GitHub Release (404)" % name)
+            return False
+        print("   ❌ %s: HTTP %s" % (name, exc.code))
+        return False
+    except Exception as exc:                          # noqa: BLE001
+        _cleanup(tmp)
+        print("   ❌ %s: %s: %s" % (name, type(exc).__name__, exc))
+        return False
+
+    if expect_sha:
+        got = sha256_of(tmp)
+        if got != expect_sha:
+            _cleanup(tmp)
+            print("   ❌ %s: sha256 không khớp (file hỏng hoặc release đã đổi)\n"
+                  "        mong đợi %s\n        nhận được %s"
+                  % (name, expect_sha[:16], got[:16]))
+            return False
+
+    if os.path.isfile(dest):
+        os.remove(dest)
+    os.rename(tmp, dest)
+    print("   ✅ %-24s %8.1f MB  sha256 khớp" % (name, _mb(dest)))
+    return True
+
+
+def _cleanup(path):
+    if os.path.isfile(path):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
+def download_release(manifest, dest_model, dest_tokenizer, force=False):
+    """Tải toàn bộ file model từ GitHub Release theo manifest."""
+    base = "https://github.com/%s/releases/download/%s" % (
+        manifest["repo"], manifest["tag"])
+    total_mb = sum(f["size"] for f in manifest["files"]) / 1024.0 ** 2
+    print("📥 Tải model dịch từ GitHub Release  %s@%s  (%.0f MB)"
+          % (manifest["repo"], manifest["tag"], total_mb))
+    print("   %s" % base)
+
+    ok = True
+    for item in manifest["files"]:
+        if item["dest"] == "tokenizer":
+            dest = dest_tokenizer
+        else:
+            dest = os.path.join(dest_model, item["name"])
+        ok = download("%s/%s" % (base, item["name"]), dest,
+                      item.get("size"), item.get("sha256"), force) and ok
+
+    if not ok:
+        print("\n❌ Tải không đủ file.\n"
+              "   Nếu lỗi 404: release %r chưa được publish.\n"
+              "   → Xem CLAUDE.md mục 'Phát hành model' để biết cách tạo release,\n"
+              "   → hoặc copy tay rồi chạy: python scripts/prepare_model.py --source <dir>"
+              % manifest["tag"])
+    return ok
 
 
 def find_ct2_dir(source):
@@ -131,23 +249,35 @@ def verify(model_dir, tokenizer_path):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Copy + verify model dịch zh<->vi")
-    ap.add_argument("--source", help="Thư mục chứa ct2/nllb-trim-int8 và "
-                                     "nllb-zhvi-trimmed/tokenizer.json")
+    ap = argparse.ArgumentParser(
+        description="Tải/copy + verify model dịch zh<->vi")
+    ap.add_argument("--source", help="Copy từ thư mục có sẵn thay vì tải mạng "
+                                     "(thư mục chứa ct2/nllb-trim-int8 và "
+                                     "nllb-zhvi-trimmed/tokenizer.json)")
     ap.add_argument("--dest-model", default=DEFAULT_MT_MODEL_DIR)
     ap.add_argument("--dest-tokenizer", default=DEFAULT_MT_TOKENIZER)
     ap.add_argument("--verify-only", action="store_true",
-                    help="Chỉ kiểm tra, không copy")
+                    help="Chỉ kiểm tra, không tải/copy")
     ap.add_argument("--force", action="store_true",
-                    help="Ghi đè model đã có ở đích")
+                    help="Tải/copy lại đè lên file đã có")
     args = ap.parse_args()
 
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+    # Không chỉ định --source → tải từ GitHub Release. Đây là đường mặc định để
+    # máy mới clone repo về là chạy được ngay, không cần ai copy tay cho.
+    if not args.verify_only and not args.source:
+        manifest = load_release_manifest()
+        if not download_release(manifest, args.dest_model, args.dest_tokenizer,
+                                args.force):
+            return 1
+        print()
+        ok = verify(args.dest_model, args.dest_tokenizer)
+        _print_total(ok, args.dest_model, args.dest_tokenizer)
+        return 0 if ok else 1
+
     if not args.verify_only:
-        if not args.source:
-            ap.error("cần --source (hoặc dùng --verify-only)")
         if not os.path.isdir(args.source):
             ap.error("không tìm thấy thư mục nguồn: %s" % args.source)
 
@@ -188,16 +318,20 @@ def main():
         print()
 
     ok = verify(args.dest_model, args.dest_tokenizer)
+    _print_total(ok, args.dest_model, args.dest_tokenizer)
+    return 0 if ok else 1
+
+
+def _print_total(ok, dest_model, dest_tokenizer):
     total = 0.0
-    if os.path.isdir(args.dest_model):
-        total += _mb(args.dest_model)
-    if os.path.isfile(args.dest_tokenizer):
-        total += _mb(args.dest_tokenizer)
-    print("\n%s  Tổng dung lượng cần mang lên Jetson: %.1f MB"
+    if os.path.isdir(dest_model):
+        total += _mb(dest_model)
+    if os.path.isfile(dest_tokenizer):
+        total += _mb(dest_tokenizer)
+    print("\n%s  Model dịch: %.1f MB"
           % ("✅ SẴN SÀNG" if ok else "❌ CHƯA SẴN SÀNG", total))
     if ok:
         print("→ Thử ngay: python -m onevoice.translate \"这个地方怎么走?\"")
-    return 0 if ok else 1
 
 
 if __name__ == "__main__":

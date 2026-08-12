@@ -41,6 +41,8 @@ DEFAULT_MT_TOKENIZER = os.path.join(_REPO_ROOT, "models", "mt", "tokenizer.json"
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 DEFAULT_GLOSSARY = os.path.join(_DATA_DIR, "glossary_vi_zh.json")
 DEFAULT_ZH_UNK_MAP = os.path.join(_DATA_DIR, "zh_unk_map.json")
+# Manifest của GitHub Release chứa model dịch (tên file + kích thước + sha256)
+DEFAULT_MT_RELEASE = os.path.join(_DATA_DIR, "mt_release.json")
 
 
 def _env_int(name, default):

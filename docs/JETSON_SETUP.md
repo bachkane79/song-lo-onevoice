@@ -64,6 +64,15 @@ VAD. NVIDIA phát hành wheel riêng cho từng JetPack tại
 
 Model **không nằm trong git** (GitHub giới hạn 100 MB/file). Tổng cần **~652 MB**.
 
+**Cách nhanh nhất — một lệnh làm hết:**
+
+```bash
+python3 scripts/setup.py
+```
+
+Nó chạy đúng hai bước dưới đây rồi dịch thử một câu mỗi chiều. Chỉ đọc tiếp phần
+này khi cần làm tay (Jetson không có mạng chẳng hạn).
+
 ### 3.1. STT (258 MB) — tự tải, không cần copy
 
 ```bash
@@ -80,14 +89,22 @@ Jetson không có mạng thì copy thư mục `models/stt/` từ máy dev sang, 
 python3 scripts/download_stt.py --verify-only
 ```
 
-### 3.2. Máy dịch (394 MB) — copy tay
+### 3.2. Máy dịch (397 MB) — tải từ GitHub Release
 
 ```bash
-# Trên máy dev — chỉ cần đúng 2 thứ này, tổng ~397 MB
-scp -r ct2/nllb-trim-int8            jetson@<ip>:~/onevoice-model/
+python3 scripts/prepare_model.py
+```
+
+Tải 4 file từ release `mt-model-v1` của chính repo này và **kiểm tra sha256** —
+file `model.bin` tải thiếu vẫn nạp được vào CTranslate2 và vẫn sinh ra chữ, chỉ
+là chữ rác, nên bước kiểm tra này không bỏ được.
+
+Jetson không có mạng thì copy tay từ máy dev:
+
+```bash
+scp -r ct2/nllb-trim-int8                jetson@<ip>:~/onevoice-model/
 scp    nllb-zhvi-trimmed/tokenizer.json  jetson@<ip>:~/onevoice-model/
 
-# Trên Jetson
 python3 scripts/prepare_model.py --source ~/onevoice-model
 ```
 

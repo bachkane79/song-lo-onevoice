@@ -1,0 +1,32 @@
+{
+  "note": "Model dịch 394 MB không commit được vào git (GitHub giới hạn 100 MB/file) nên phát hành qua GitHub Release. scripts/prepare_model.py dùng file này để tải và kiểm tra toàn vẹn.",
+  "repo": "bachkane79/song-lo-onevoice",
+  "tag": "mt-model-v1",
+  "model_name": "NLLB-200-distilled-600M vocab-trim zh+vi, CTranslate2 int8",
+  "files": [
+    {
+      "name": "model.bin",
+      "dest": "model",
+      "size": 412701121,
+      "sha256": "3ca2cefa9f059ba86cd42c4702a1b3a40540eb4adf18fba0e18f5e8fc6bdf4a9"
+    },
+    {
+      "name": "config.json",
+      "dest": "model",
+      "size": 233,
+      "sha256": "72901fbd8abd89fb5cf4a388f26fc681f5c4c58a1e1a88b30b879f107270e7ee"
+    },
+    {
+      "name": "shared_vocabulary.json",
+      "dest": "model",
+      "size": 831119,
+      "sha256": "f5aba557a12b2370c994d9043cd978f07bbe90e4bee313c48d80c25f2629e9b1"
+    },
+    {
+      "name": "tokenizer.json",
+      "dest": "tokenizer",
+      "size": 2606530,
+      "sha256": "df414a63434cc55cba79b6d74db5279b59ab0cfbff17a1414358875673169d8d"
+    }
+  ]
+}
