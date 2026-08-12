@@ -1,0 +1,27 @@
+# ======================================================
+# OneVoice — Mic → VAD → Segmenter → STT → Translate → Display
+# Cài trên máy dev (Windows/Linux x86) và trên Jetson (aarch64)
+# ======================================================
+
+# ── Module 1 + 2: VAD & Segmenter ─────────────────────
+numpy>=1.22.0
+onnxruntime>=1.14.0
+sounddevice>=0.4.5
+scipy>=1.8.0
+
+# ── Module 4: Máy dịch zh <-> vi ──────────────────────
+# CHỈ hai thư viện này. Không cần torch, không cần transformers —
+# quan trọng trên Jetson: torch aarch64 nặng vài GB và phải build riêng.
+ctranslate2>=4.0.0
+tokenizers>=0.15.0
+
+# ── Module 3: STT ─────────────────────────────────────
+# SenseVoice (tiếng Hoa) + Zipformer-30M (tiếng Việt), cả hai chạy trên
+# sherpa-onnx. Tải model bằng: python scripts/download_stt.py
+sherpa-onnx>=1.10.0
+huggingface_hub>=0.20.0   # chỉ dùng lúc tải model, không cần khi chạy
+
+# ── Tùy chọn ──────────────────────────────────────────
+soundfile>=0.12.0  # run_pipeline.py --wav với file không phải WAV 16-bit
+psutil>=5.9.0      # scripts/bench_*.py đo peak RAM (Linux không bắt buộc)
+pytest>=7.0.0      # chạy tests/

@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# ── Model (KHÔNG commit — GitHub giới hạn 100 MB/file) ──────────────────────
+# Máy dịch 394 MB : python scripts/prepare_model.py --source <dir>
+# STT      258 MB : python scripts/download_stt.py
+# Dấu / ở đầu là bắt buộc: "models/" không neo sẽ khớp cả
+# VAD-Segmenter/models/ và làm mất silero_vad.onnx khỏi repo.
+/models/
+
+# Output debug của Segmenter (bật save_wav_debug=True mới sinh ra)
+output_segments/
+
+# Kết quả benchmark
+bench_results*.json

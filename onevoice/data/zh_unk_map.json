@@ -1,0 +1,42 @@
+{
+  "version": 3,
+  "note": "Thay cụm tiếng Hoa chứa ký tự KHÔNG CÓ trong vocab NLLB (thành <unk>). CHỈ dùng cho chiều zh->vi. Mỗi giá trị 'to' dưới đây đã được chạy thử thật và chọn bản cho kết quả tốt nhất trong số các phương án — ĐỪNG sửa bằng cảm giác, hãy đo lại bằng: python scripts/audit_vocab.py --check-rules",
+  "rules_note_spacing": "Từ tiếng Việt/Anh chèn vào PHẢI có khoảng trắng hai bên. Đã đo: '菜太salty了' ra 'quá ngọt' (sai), '菜太 salty 了' ra 'quá mặn' (đúng) — thiếu khoảng trắng thì tokenizer ghép nó vào ký tự Hán liền kề.",
+  "missing_chars_travel": "厕咸啤汤烫虾蟹辣酱醋鸡炒煎鸭锅筷勺葱姜蒜椒",
+  "measured": "Vocab NLLB thiếu 0/500, 4/1000, 54/2000, 331/3000 ký tự Hán thường dùng nhất (đo trên 41 MB Wikipedia tiếng Hoa). Phần thiếu tập trung vào từ ăn uống, họ người (刘吴杨赵郑邓) và tên tỉnh (浙湘陕闽粤沪) — đúng ba nhóm thiết bị du lịch dùng nhiều nhất. Xem docs/TRANSLATE_GUIDE.md mục 'Hạn chế đã biết'.",
+  "rules": [
+    { "from": "厕所",    "to": "卫生间",        "why": "đồng nghĩa hoàn toàn, 卫生间 có trong vocab" },
+    { "from": "厕",      "to": "卫生间",        "why": "dự phòng khi 厕 đứng lẻ" },
+    { "from": "很烫",    "to": "很热",          "why": "đồng nghĩa gần; đặt trước luật '烫' để không ra '很很热'" },
+    { "from": "烫",      "to": "热",            "why": "đồng nghĩa gần, 热 có trong vocab" },
+
+    { "from": "辣椒酱",  "to": " chili sauce ",  "why": "'tương ớt' bị dịch thành 'Chiết tiệc'; tiếng Anh giữ được nghĩa" },
+    { "from": "辣椒",    "to": " chili ",        "why": "'ớt' đứng lẻ làm model bỏ cả câu; 'chili' giữ được nghĩa" },
+    { "from": "鸡汤",    "to": " canh gà ",      "why": "gộp cả cụm để đúng trật tự từ tiếng Việt" },
+    { "from": "鸡蛋",    "to": " trứng ",        "why": "鸡 thiếu trong vocab" },
+    { "from": "鸡肉",    "to": " thịt gà ",      "why": "鸡 thiếu trong vocab" },
+    { "from": "酱油",    "to": " nước tương ",   "why": "酱 thiếu; 'soy sauce' ra 'nước sốt đậu nành'" },
+    { "from": "啤酒",    "to": " bia ",          "why": "啤 thiếu trong vocab" },
+    { "from": "火锅",    "to": " lẩu ",          "why": "锅 thiếu trong vocab" },
+    { "from": "筷子",    "to": " đôi đũa ",      "why": "筷 thiếu trong vocab" },
+    { "from": "勺子",    "to": " thìa ",         "why": "勺 thiếu trong vocab" },
+
+    { "from": "鸡",      "to": " gà ",           "why": "không có đồng nghĩa tiếng Hoa nào trong vocab" },
+    { "from": "虾",      "to": " tôm ",          "why": "phồn thể 蝦 cũng thiếu" },
+    { "from": "蟹",      "to": " cua ",          "why": "'crab' bị dịch thành 'con ong'" },
+    { "from": "鸭",      "to": " vịt ",          "why": "không có đồng nghĩa nào trong vocab" },
+    { "from": "辣",      "to": " cay ",          "why": "辛辣 vẫn chứa 辣 nên vẫn <unk>" },
+    { "from": "咸",      "to": " mặn ",          "why": "phồn thể 鹹 cũng thiếu; 盐味重 ra 'chất muối'" },
+    { "from": "汤",      "to": " canh ",         "why": "phồn thể 湯 cũng thiếu" },
+    { "from": "醋",      "to": " dấm ",          "why": "phương án ít sai nhất; 'vinegar' ra 'cà chua'. VẪN CHƯA ỔN khi 醋 đứng một mình" },
+    { "from": "酱",      "to": " nước sốt ",     "why": "dự phòng cho 酱 đứng lẻ" },
+    { "from": "炒",      "to": " xào ",          "why": "không có đồng nghĩa nào trong vocab" },
+    { "from": "煎",      "to": " chiên ",        "why": "không có đồng nghĩa nào trong vocab" },
+    { "from": "锅",      "to": " nồi ",          "why": "không có đồng nghĩa nào trong vocab" },
+    { "from": "葱",      "to": " hành ",         "why": "không có đồng nghĩa nào trong vocab" },
+    { "from": "姜",      "to": " gừng ",         "why": "không có đồng nghĩa nào trong vocab" },
+    { "from": "蒜",      "to": " tỏi ",          "why": "không có đồng nghĩa nào trong vocab" },
+    { "from": "椒",      "to": " tiêu ",         "why": "dự phòng cho 椒 đứng lẻ" },
+    { "from": "啤",      "to": " bia ",          "why": "dự phòng cho 啤 đứng lẻ" }
+  ]
+}
