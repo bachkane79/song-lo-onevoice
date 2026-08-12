@@ -61,9 +61,11 @@ onevoice/          Module 3, 4, 5 + điều phối
   langid.py        nhận diện zh/vi theo hệ chữ viết (dự phòng)
   pipeline.py      worker thread, chính sách quá tải
   data/            bảng dữ liệu + manifest release
-scripts/           setup, tải model, benchmark, audit
+  mic.py           tự chọn micro — mở thử từng thiết bị trước khi nạp model
+  vadlog.py        lọc log ồn của VAD-Segmenter (không sửa file họ) + gộp lượt
+scripts/           setup, tải model, benchmark, audit, diag_vad
 tests/             78 test — chạy `pytest -q` trước mỗi lần commit
-docs/              STT_GUIDE, TRANSLATE_GUIDE, JETSON_SETUP
+docs/              STT_GUIDE, TRANSLATE_GUIDE, AUDIO_TUNING, JETSON_SETUP
 ```
 
 ## Quy tắc khi sửa code
@@ -80,6 +82,8 @@ docs/              STT_GUIDE, TRANSLATE_GUIDE, JETSON_SETUP
    - `onevoice/data/zh_unk_map.json` — mỗi luật đã thử nhiều phương án và chọn
      bản tốt nhất. Đo lại: `python scripts/audit_vocab.py --check-rules`
    - `onevoice/data/glossary_vi_zh.json` — đo lại: `python scripts/probe_glossary.py`
+   - Tham số VAD/Segmenter trong `PipelineConfig` — hiệu chỉnh theo số đo trên
+     mic thật, xem `docs/AUDIO_TUNING.md`. Đo lại: `python scripts/diag_vad.py`
 4. **Tiếng Việt trong comment/docstring/tài liệu**, theo đúng phong cách repo.
 5. **Chạy `pytest -q` trước khi commit.** 78 test, phần cần model tự bỏ qua nếu
    chưa tải.
@@ -95,6 +99,13 @@ dựng chuỗi `[src_lang] + pieces + </s>`. Có test khoá lại
 **LID có sẵn của SenseVoice không dùng được để định tuyến.** Nó không biết tiếng
 Việt nên báo `<|zh|>` cho 8/8 câu tiếng Việt. Bộ định tuyến hiện tại dùng sản
 lượng của Zipformer làm tín hiệu — xem docstring `BilingualSttEngine`.
+
+**Energy Valley (tầng 2 của Segmenter) tắt mặc định — đừng bật lại mà không đo.**
+AGC trong `VAD_process` kéo mọi thứ về biên độ 0.3 nên năng lượng lúc im (0.101)
+gần bằng lúc nói (0.124). Tầng đó cắt khi `energy < ratio * peak`, nên `ratio`
+0.25 rơi ngay dưới median lúc nói → **cắt giữa câu liên tục**; hạ xuống 0.12 thì
+dưới cả sàn ồn → mọi câu rơi xuống Max Duration 8s. Không có giá trị nào ở giữa
+chạy được. Chi tiết + cách đo: `docs/AUDIO_TUNING.md`.
 
 ## Hạn chế đã biết (đã ghi trong docs, không phải bug cần sửa)
 
@@ -114,6 +125,8 @@ python scripts/setup.py --check                      # chỉ kiểm tra
 pytest -q                                            # 78 test
 pytest -q -m "not needs_model"                       # test logic, không cần model
 
+python scripts/diag_vad.py                           # đo VAD trước khi chỉnh Segmenter
+python run_pipeline.py --list-devices                # ✓/✗ mở thử từng micro
 python scripts/bench_stt.py --wav-dir DIR            # đo STT + chấm định tuyến
 python scripts/bench_translate.py --sweep-beam       # đo máy dịch
 python scripts/audit_vocab.py --chars                # ký tự nào model không đọc được

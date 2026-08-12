@@ -120,14 +120,55 @@ class PipelineConfig:
 
     # ── VAD ──────────────────────────────────────────────────────────────
     vad_threshold: float = 0.35
+    # None = tự dò micro dùng được (onevoice/mic.py). Đặt số để khóa cứng.
     mic_device_id: int = None
+    # Nuốt visualizer 31 dòng/giây của VAD-Segmenter. Tắt (--verbose) khi cần
+    # xem lại log gốc để gỡ lỗi phần cứng âm thanh.
+    quiet_vad_output: bool = True
+    # In 2 mốc mỗi lượt nói (bắt đầu / hết lượt) thay cho visualizer.
+    log_vad_turns: bool = True
 
-    # ── Segmenter (giữ đúng mặc định đã tinh chỉnh của Module 2) ─────────
-    silence_timeout: float = 0.6
-    min_segment_duration: float = 1.2
+    # ── Segmenter ────────────────────────────────────────────────────────
+    # Số dưới đây chọn theo đo thật trên mic Realtek (scripts/diag_vad.py):
+    #
+    #                       phòng yên      đang nói
+    #   VAD prob (median)     0.031          0.891
+    #   năng lượng (median)   0.101          0.124
+    #   chuỗi im dài nhất     5.15s          0.10s
+    #
+    # Đọc bảng này ra hai kết luận, cả hai đều ngược với mặc định gốc:
+    #
+    # [1] Khoảng lặng dài nhất BÊN TRONG một câu liền mạch chỉ 0.10s → mọi giá
+    #     trị silence_timeout >= 0.4s đều không thể cắt giữa câu. Tầng 1 chưa
+    #     bao giờ là thủ phạm; nâng nó lên chỉ thêm độ trễ.
+    #
+    # [2] Energy Valley KHÔNG dùng được trên phần cứng này. AGC trong
+    #     VAD_process kéo mọi thứ về biên độ mục tiêu 0.3, nên năng lượng lúc im
+    #     (0.101) gần bằng lúc nói (0.124) — đúng cái dải động mà valley cần đã
+    #     bị san phẳng. Với peak≈0.40: ratio 0.25 → ngưỡng 0.10, nằm NGAY DƯỚI
+    #     median lúc nói → bắn liên tục giữa câu (đây là lỗi "cắt hết giữa câu").
+    #     Hạ xuống ratio 0.12 → ngưỡng 0.056, dưới cả sàn ồn → không bao giờ bắn,
+    #     mọi câu rơi xuống Max Duration 8s. Không có giá trị nào ở giữa chạy
+    #     được, vì khoảng nghỉ thật và tiếng ồn nền cùng nằm ở mức 0.10.
+    #     → Tắt hẳn tầng 2, dựa vào VAD silence (0.031 vs 0.891, tách rất rõ).
+
+    # ⚠️ Cộng THẲNG vào độ trễ của mọi câu. 0.7s = 0.10s đo được + biên cho
+    # người thật ngập ngừng giữa câu (máy đọc thì đều, người thì không).
+    silence_timeout: float = 0.7
     max_segment_duration: float = 8.0
-    valley_ratio: float = 0.25
-    valley_min_frames: int = 3
+
+    # Tầng 2 tắt mặc định — xem [2] ở trên. Bật lại bằng --energy-valley nếu
+    # chạy trên mic khác (hoặc sau khi AGC được chỉnh) rồi đo lại bằng
+    # scripts/diag_vad.py: chỉ có nghĩa khi năng lượng lúc im thấp hơn hẳn lúc
+    # nói. Hai số dưới chỉ dùng khi đã bật.
+    use_energy_valley: bool = False
+    min_segment_duration: float = 2.5   # chưa đủ dài thì không tìm valley
+    valley_ratio: float = 0.12
+    valley_min_frames: int = 8          # 8 frame = 256ms
+    # Segmenter vẫn có thể nhả mẩu rất ngắn qua nhánh Silence Timeout (nhánh đó
+    # không kiểm tra min_segment_duration). Dưới ngưỡng này thì bỏ, xem
+    # OneVoicePipeline.on_segment_ready.
+    min_utterance_s: float = 0.4
     save_wav_debug: bool = False        # Zero I/O khi nhúng thiết bị
 
     # ── Hàng đợi STT+MT ─────────────────────────────────────────────────
