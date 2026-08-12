@@ -70,71 +70,127 @@ def load_release_manifest(path=None):
         return json.load(f)
 
 
-def download(url, dest, expect_size=None, expect_sha=None, force=False):
-    """Tải một file kèm thanh tiến trình, kiểm tra sha256 sau khi tải xong.
+def download(url, dest, expect_size=None, expect_sha=None, force=False,
+             attempts=4):
+    """Tải một file, thử lại khi đứt mạng, kiểm tra sha256 sau khi xong.
 
-    Tải vào file tạm `.part` rồi mới đổi tên: nếu mạng đứt giữa chừng thì lần sau
-    sẽ tải lại chứ không để lại một file cụt trông như đã tải xong.
+    Ba cơ chế chống hỏng, đều cần thiết với file 394 MB:
+
+    - **File tạm `.part`**: chỉ đổi tên sang tên thật khi đã tải đủ và đúng
+      sha256. Không bao giờ để lại một file cụt trông như đã tải xong.
+    - **Tải tiếp (HTTP Range)**: mạng đứt giữa chừng thì lần thử sau tải tiếp từ
+      chỗ dở, không tải lại từ đầu. Cần thiết khi cắm Jetson qua wifi.
+    - **Kiểm tra sha256**: `model.bin` thiếu vài MB vẫn nạp được vào CTranslate2
+      và vẫn sinh ra chữ — chỉ là chữ rác. Không kiểm tra thì lỗi chỉ lộ ra ở
+      người dùng cuối.
     """
+    import time
     import urllib.error
     import urllib.request
 
+    name = os.path.basename(dest)
     if os.path.isfile(dest) and not force:
         if expect_sha and sha256_of(dest) == expect_sha:
-            print("   ⏭  %-24s đã có, sha256 khớp" % os.path.basename(dest))
+            print("   ⏭  %-24s đã có, sha256 khớp" % name)
             return True
-        print("   ♻️  %-24s đã có nhưng sai sha256 → tải lại"
-              % os.path.basename(dest))
+        print("   ♻️  %-24s đã có nhưng sai sha256 → tải lại" % name)
 
     os.makedirs(os.path.dirname(os.path.abspath(dest)), exist_ok=True)
     tmp = dest + ".part"
-    name = os.path.basename(dest)
-    try:
-        with urllib.request.urlopen(url, timeout=60) as resp:
-            total = int(resp.headers.get("Content-Length") or expect_size or 0)
-            done = 0
-            with open(tmp, "wb") as out:
-                while True:
-                    block = resp.read(1 << 20)
-                    if not block:
-                        break
-                    out.write(block)
-                    done += len(block)
-                    if total:
-                        pct = 100.0 * done / total
-                        sys.stdout.write("\r   ⬇  %-24s %5.1f%%  (%.1f/%.1f MB)"
-                                         % (name, pct, done / 1024.0 ** 2,
-                                            total / 1024.0 ** 2))
-                        sys.stdout.flush()
-        if total:
-            sys.stdout.write("\r" + " " * 78 + "\r")
-            sys.stdout.flush()
-    except urllib.error.HTTPError as exc:
-        _cleanup(tmp)
-        if exc.code == 404:
-            print("   ❌ %s: không tìm thấy trên GitHub Release (404)" % name)
-            return False
-        print("   ❌ %s: HTTP %s" % (name, exc.code))
-        return False
-    except Exception as exc:                          # noqa: BLE001
-        _cleanup(tmp)
-        print("   ❌ %s: %s: %s" % (name, type(exc).__name__, exc))
-        return False
+    # Chỉ vẽ thanh tiến trình khi ra terminal thật. Khi output bị pipe vào file
+    # hay log thì "\r" không ghi đè được, mỗi 1 MB sẽ thành một dòng — file
+    # model 394 MB sinh ra 400 dòng rác.
+    interactive = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
-    if expect_sha:
-        got = sha256_of(tmp)
-        if got != expect_sha:
+    for attempt in range(1, attempts + 1):
+        resume_from = os.path.getsize(tmp) if os.path.isfile(tmp) else 0
+        if expect_size and resume_from >= expect_size:
+            resume_from = 0          # file tạm đã quá dài → hỏng, bỏ tải lại
             _cleanup(tmp)
-            print("   ❌ %s: sha256 không khớp (file hỏng hoặc release đã đổi)\n"
-                  "        mong đợi %s\n        nhận được %s"
-                  % (name, expect_sha[:16], got[:16]))
-            return False
 
-    if os.path.isfile(dest):
-        os.remove(dest)
-    os.rename(tmp, dest)
-    print("   ✅ %-24s %8.1f MB  sha256 khớp" % (name, _mb(dest)))
-    return True
+        label = "   ⬇  %-24s" % name
+        if attempt > 1:
+            label += " (thử lần %d/%d" % (attempt, attempts)
+            label += ", tải tiếp từ %.0f MB)" % (resume_from / 1024.0 ** 2) \
+                if resume_from else ")"
+        if not interactive:
+            if expect_size:
+                label += " %.1f MB..." % (expect_size / 1024.0 ** 2)
+            print(label)
+            sys.stdout.flush()
+        elif attempt > 1:
+            print(label)
+
+        try:
+            req = urllib.request.Request(url)
+            if resume_from:
+                req.add_header("Range", "bytes=%d-" % resume_from)
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                # Server bỏ qua Range (trả 200 thay vì 206) → phải ghi lại từ đầu,
+                # nếu cứ nối vào file cũ sẽ tạo ra file hỏng mà sha256 mới bắt được.
+                if resume_from and resp.status != 206:
+                    resume_from = 0
+                mode = "ab" if resume_from else "wb"
+                total = int(resp.headers.get("Content-Length") or 0) + resume_from
+                total = total or expect_size or 0
+                done = resume_from
+                with open(tmp, mode) as out:
+                    while True:
+                        block = resp.read(1 << 20)
+                        if not block:
+                            break
+                        out.write(block)
+                        done += len(block)
+                        if total and interactive:
+                            sys.stdout.write(
+                                "\r   ⬇  %-24s %5.1f%%  (%.1f/%.1f MB)"
+                                % (name, 100.0 * done / total,
+                                   done / 1024.0 ** 2, total / 1024.0 ** 2))
+                            sys.stdout.flush()
+            if total and interactive:
+                sys.stdout.write("\r" + " " * 78 + "\r")
+                sys.stdout.flush()
+
+        except urllib.error.HTTPError as exc:
+            _cleanup(tmp)
+            if exc.code == 404:
+                print("   ❌ %s: không tìm thấy trên GitHub Release (404)" % name)
+                return False       # 404 thì thử lại cũng vô ích
+            print("   ⚠️  %s: HTTP %s" % (name, exc.code))
+            if attempt == attempts:
+                return False
+            time.sleep(2 * attempt)
+            continue
+        except Exception as exc:                      # noqa: BLE001
+            # Đứt mạng / DNS lỗi / timeout — GIỮ lại .part để lần sau tải tiếp
+            print("   ⚠️  %s: %s: %s" % (name, type(exc).__name__, exc))
+            if attempt == attempts:
+                print("   ❌ %s: thử %d lần đều lỗi mạng" % (name, attempts))
+                return False
+            time.sleep(2 * attempt)
+            continue
+
+        if expect_sha:
+            got = sha256_of(tmp)
+            if got != expect_sha:
+                _cleanup(tmp)      # hỏng thật → xoá hẳn, lần sau tải lại từ đầu
+                print("   ⚠️  %s: sha256 không khớp\n"
+                      "        mong đợi %s\n        nhận được %s"
+                      % (name, expect_sha[:16], got[:16]))
+                if attempt == attempts:
+                    print("   ❌ %s: file hỏng hoặc release đã đổi nội dung.\n"
+                          "        Nếu bạn vừa phát hành model mới, cập nhật "
+                          "sha256 trong onevoice/data/mt_release.json." % name)
+                    return False
+                continue
+
+        if os.path.isfile(dest):
+            os.remove(dest)
+        os.rename(tmp, dest)
+        print("   ✅ %-24s %8.1f MB  sha256 khớp" % (name, _mb(dest)))
+        return True
+
+    return False
 
 
 def _cleanup(path):
