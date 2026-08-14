@@ -75,6 +75,18 @@ def normalize_source(text):
     return _WS_RE.sub(" ", text).strip()
 
 
+# Ký tự "có nội dung": chữ số, Latin (kèm dấu tiếng Việt), Hán, Kana.
+# Bản dịch không chứa ký tự nào trong nhóm này = model chỉ nhả dấu câu.
+#
+# Vì sao phải kiểm: beam search của NLLB đôi khi rơi vào chuỗi dấu câu thuần khi
+# câu vào có cụm lặp và bị cắt lửng. Đo thật trên mic DGM20, câu
+# "Dạ đúng rồi đúng rồi nghĩa là cái đấy là là nó sẽ chạy song song với nhau cái
+# chuyện gì" ra đúng ",,,,,,,,,,,,." — không exception, không <unk>, nên tầng
+# hiển thị in nguyên chuỗi đó ra như một bản dịch bình thường.
+_CONTENT_RE = re.compile("[0-9A-Za-zÀ-ɏḀ-ỿ"
+                         "぀-ヿ一-鿿]")
+
+
 @dataclass
 class TranslationResult:
     """Kết quả một lần dịch."""
@@ -93,6 +105,10 @@ class TranslationResult:
     # nhìn thấy. Danh sách không rỗng = câu dịch có thể sai/thiếu nghĩa; nên log
     # lại để bổ sung vào onevoice/data/zh_unk_map.json.
     unk_chars: tuple = ()
+    # True = `target` chỉ có dấu câu, không một chữ nào (xem _CONTENT_RE).
+    # `target` vẫn giữ nguyên chuỗi model nhả ra để còn gỡ lỗi được; tầng gọi
+    # phải tự quyết hiển thị gì thay thế.
+    degenerate: bool = False
 
     def __str__(self):
         return self.target
@@ -309,7 +325,8 @@ class NllbTranslator:
                 tgt_lang=tgt_short, latency_ms=round(per_item_ms, 1),
                 in_tokens=len(item["tokens"]), out_tokens=len(hyp_tokens),
                 truncated=item["truncated"], glossary_hits=glos_hits,
-                zh_norm_hits=item["norm_hits"], unk_chars=item["unk_chars"]))
+                zh_norm_hits=item["norm_hits"], unk_chars=item["unk_chars"],
+                degenerate=bool(target) and not _CONTENT_RE.search(target)))
         return results
 
     @staticmethod

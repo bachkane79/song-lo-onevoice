@@ -128,6 +128,53 @@ class TestPipelineFlow:
         assert disp.events == []
         assert pipe.stats["unknown_lang"] == 1
 
+    def test_skipped_utterance_is_never_silent(self):
+        """Câu bị bỏ phải để lại dấu vết — nếu không nó biến mất khỏi màn hình.
+
+        Đo thật trên mic DGM20: số thứ tự nhảy 045 → 047 và 081 → 083, người
+        dùng không có cách nào biết máy nghe mà không hiểu, hay máy đã treo.
+        """
+        class SilentStt(MockSttEngine):
+            def transcribe(self, audio, sample_rate):
+                return SttResult(text="   ")
+
+        pipe, disp = build(SilentStt())
+        pipe.run_offline([(None, 16000, 1.0)])
+        assert any("#001" in s for s in disp.statuses)
+        # ...và phải hiện lại trong dòng thống kê lúc dừng
+        assert any("không ra chữ" in s for s in disp.statuses)
+
+    def test_undecidable_language_is_reported(self):
+        class NumberStt(MockSttEngine):
+            def transcribe(self, audio, sample_rate):
+                return SttResult(text="12345")
+
+        pipe, disp = build(NumberStt())
+        pipe.run_offline([(None, 16000, 1.0)])
+        assert any("#001" in s and "không xác định" in s for s in disp.statuses)
+        assert any("không rõ tiếng nào" in s for s in disp.statuses)
+
+    def test_degenerate_translation_falls_back_to_source(self):
+        """Máy dịch chỉ nhả dấu câu → hiện nguyên văn STT, không in rác.
+
+        Ca thật: "Dạ đúng rồi đúng rồi nghĩa là cái đấy là là nó sẽ chạy song
+        song với nhau cái chuyện gì" → ",,,,,,,,,,,,." (câu #033).
+        """
+        class CommaTranslator(FakeTranslator):
+            def translate(self, text, src_lang, tgt_lang=None, beam_size=None):
+                return TranslationResult(
+                    source=text, target=",,,,,,,,,,,,.", src_lang=src_lang,
+                    tgt_lang="zh", latency_ms=1.0, degenerate=True)
+
+        stt = MockSttEngine(script=[("vi", "Dạ đúng rồi đúng rồi")])
+        pipe, disp = build(stt, translator=CommaTranslator())
+        pipe.run_offline([(None, 16000, 1.0)])
+
+        assert len(disp.events) == 1
+        assert disp.events[0].target_text == "Dạ đúng rồi đúng rồi"
+        assert any("dấu câu" in w for w in disp.events[0].warnings)
+        assert pipe.stats["mt_degenerate"] == 1
+
     def test_stt_exception_does_not_kill_pipeline(self):
         class FlakyStt(MockSttEngine):
             def __init__(self):

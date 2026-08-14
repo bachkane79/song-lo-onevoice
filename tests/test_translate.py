@@ -83,6 +83,21 @@ class TestNormalizeSource:
         assert normalize_source("   ") == ""
 
 
+class TestDegenerateDetection:
+    """Nhận ra bản dịch chỉ có dấu câu — xem _CONTENT_RE trong translate.py."""
+
+    def test_punctuation_only_is_degenerate(self):
+        from onevoice.translate import _CONTENT_RE
+        for junk in (",,,,,,,,,,,,.", "。。。", "!!! ???", "、、、,,,", "— — —"):
+            assert not _CONTENT_RE.search(junk), junk
+
+    def test_real_translations_are_not_degenerate(self):
+        from onevoice.translate import _CONTENT_RE
+        for good in ("你好。", "Xin chào.", "8 倍到 10 倍.", "1990", "岘港",
+                     "Đà Nẵng", "こんにちは"):
+            assert _CONTENT_RE.search(good), good
+
+
 class TestZhNormalizer:
     def test_longest_rule_wins(self):
         nz = ZhSourceNormalizer([("辣", " cay "), ("辣椒酱", " tương ớt ")])

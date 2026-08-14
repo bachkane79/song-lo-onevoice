@@ -1,0 +1,400 @@
+﻿
+======================================================================
+  🌏  OneVoice — Thiết bị phiên dịch song ngữ Việt ⇄ Hoa (offline)
+======================================================================
+  Mic → VAD → Segmenter → STT → Translate → Display
+  Toàn bộ chạy local, không cần mạng.
+======================================================================
+
+🎙️ Micro   : [1] Microphone (DGM20 USB Microphon   (tự nhận)
+🔤 Máy dịch: int8, 394 MB, cpu, beam 4, 31 luật <unk>, 30 địa danh
+🎤 STT     : bilingual (mode=dual)
+
+🚀 Sẵn sàng — nói tiếng Việt hoặc tiếng Hoa vào micro (Ctrl+C để dừng)
+
+🎙️  ▶ Lượt 1 — có tiếng nói
+🇻🇳 STT    Cái thiết bị cầm tay nhỏ nhỏ cái kích thước nó rơi vào khoảng cỡ tám nhân cho mười
+🇨🇳 DỊCH   它的尺寸大约是8倍到10倍.   #001 · 4.9s nói · 0.65s xử lý (STT 393ms + dịch 253ms)
+🇻🇳 STT    Cm thì là nó sẽ to gấp rưỡi cái thẻ căn cước công dân ấy
+🇨🇳 DỊCH   这将是公民身份证的半个.   #002 · 5.9s nói · 0.66s xử lý (STT 435ms + dịch 226ms)
+🇻🇳 STT    Đó thì nó sẽ là một cái thiết bị cầm trên tay thôi thì nó sẽ có hai chế độ là một chế độ
+🇨🇳 DỊCH   那么,它将是一个手持设备,它将有两个模式,一个模式.   #003 · 5.2s nói · 0.90s xử lý (STT 498ms + dịch 405ms)
+🇻🇳 STT    Là dịch từ chiều việt sang trung một chế độ nữa là dịch từ chiều trung sang
+🇨🇳 DỊCH   一个模式是从中向中转.   #004 · 5.2s nói · 0.62s xử lý (STT 393ms + dịch 222ms)
+🔇  ■ Lượt 1 — im lặng, hết lượt (23.9s nói)
+
+🎙️  ▶ Lượt 2 — có tiếng nói
+🇻🇳 STT    Thì là hai cái chế độ này nó sẽ là hai cái chế độ riêng biệt
+🇨🇳 DỊCH   这两种模式将是两个不同的模式.   #005 · 3.0s nói · 0.50s xử lý (STT 271ms + dịch 229ms)
+🇻🇳 STT    Thì đầu tiên là khi mà âm thanh va đi vào trong
+🇨🇳 DỊCH   首先是声音进入.   #006 · 4.4s nói · 0.58s xử lý (STT 405ms + dịch 170ms)
+🇻🇳 STT    Micro ấy thì nó sẽ bắt đầu là sẽ có một cái
+🇨🇳 DỊCH   微信就开始了.   #007 · 5.3s nói · 0.70s xử lý (STT 455ms + dịch 242ms)
+🇻🇳 STT    Có một cái bộ nhận diện đấy là nhận diện xem đấy là con người có đang nói hay không
+🇨🇳 DỊCH   有个身份识别器,它可以识别人是否在说话.   #008 · 6.5s nói · 0.97s xử lý (STT 566ms + dịch 399ms)
+🔇  ■ Lượt 2 — im lặng, hết lượt (17.0s nói)
+🇻🇳 STT    Cái này gọi là va d
+🇨🇳 DỊCH   这个叫做.   #009 · 1.0s nói · 0.30s xử lý (STT 139ms + dịch 157ms)
+
+🎙️  ▶ Lượt 3 — có tiếng nói
+🇻🇳 STT    Thì cái này là nó giống như kiểu nếu như mà có tiếng ồn khác thì
+🇨🇳 DỊCH   这就像如果有其他声音,   #010 · 4.8s nói · 0.80s xử lý (STT 501ms + dịch 298ms)
+🇻🇳 STT    Nó cũng sẽ không nhận diện rằng là lúc nào là bắt đầu là truyền cái âm thanh đấy dành
+🇨🇳 DỊCH   他也不会意识到什么时候开始传递声音.   #011 · 4.4s nói · 0.73s xử lý (STT 430ms + dịch 300ms)
+🔇  ■ Lượt 3 — im lặng, hết lượt (9.9s nói)
+
+🎙️  ▶ Lượt 4 — có tiếng nói
+🇻🇳 STT    Về cho máy dịch
+🇨🇳 DỊCH   返回翻译机   #012 · 1.0s nói · 0.48s xử lý (STT 177ms + dịch 304ms)
+🇻🇳 STT    Đấy nó sẽ tự de tex là tiếng nào là tiếng của con người
+🇨🇳 DỊCH   这将自定义人类的语言.   #013 · 4.1s nói · 0.57s xử lý (STT 348ms + dịch 225ms)
+🇻🇳 STT    Tính nào không phải tiếng của con người dạ rồi thì sau khi mà đi test được ấy thì
+🇨🇳 DỊCH   如果它不是人类的声音,在测试后,   #014 · 6.1s nói · 0.83s xử lý (STT 565ms + dịch 262ms)
+🇻🇳 STT    Là để mà khắc phục được cái nếu như mà chị dùng mấy cái như kiểu
+🇨🇳 DỊCH   如果我用这些东西来解决问题,   #015 · 4.7s nói · 0.54s xử lý (STT 342ms + dịch 199ms)
+🇻🇳 STT    Cái áp dịch mà chị nói liền cỡ một phút thì là nó sẽ
+🇨🇳 DỊCH   我只说一个分钟的传感,   #016 · 4.7s nói · 0.73s xử lý (STT 471ms + dịch 258ms)
+🇻🇳 STT    Dịch rất là lâu bởi vì nó sẽ dịch hết cụ một phút đấy thì thay vì như thế
+🇨🇳 DỊCH   翻译是很长时间的,因为它只能翻译一分钟,而不是这样.   #017 · 5.7s nói · 0.97s xử lý (STT 492ms + dịch 479ms)
+🇻🇳 STT    Thì là em sẽ chia câu ra nghĩa là bọn em sẽ có một cái gọi là
+🇨🇳 DỊCH   那么,如果我把句子分开,那么我们就会有一个叫做   #018 · 4.8s nói · 0.86s xử lý (STT 400ms + dịch 463ms)
+🇻🇳 STT    Nó sẽ đi tét đấy là những cái đoạn nào mà ngắt câu chị gọi là
+🇨🇳 DỊCH   他会走,这是我打断的段落.   #019 · 4.4s nói · 0.63s xử lý (STT 369ms + dịch 260ms)
+🇻🇳 STT    Cái sóng nó cái khi mà ngắt câu ấy thì là cái năng thị thì cái
+🇨🇳 DỊCH   当它打断话时,它的波动是视力.   #020 · 5.8s nói · 0.77s xử lý (STT 463ms + dịch 311ms)
+🇻🇳 STT    Sóng sóng âm thanh là nó sẽ bị trùng xuống một cái đoạn nhỏ thì là máy có thể
+🇨🇳 DỊCH   音频波将会在一个小部分中同步,那么机器可以   #021 · 4.6s nói · 0.70s xử lý (STT 336ms + dịch 365ms)
+🔇  ■ Lượt 4 — im lặng, hết lượt (45.0s nói)
+🇻🇳 STT    Chắc là cái đó
+🇨🇳 DỊCH   肯定是这样.   #022 · 0.6s nói · 0.23s xử lý (STT 96ms + dịch 130ms)
+
+🎙️  ▶ Lượt 5 — có tiếng nói
+🔇  ■ Lượt 5 — im lặng, hết lượt (3.6s nói)
+🇻🇳 STT    Thì sẽ có một cái nữa đấy là cái chuyên chia câu
+🇨🇳 DỊCH   接下来就会有另一个.   #023 · 3.8s nói · 0.76s xử lý (STT 368ms + dịch 388ms)
+
+🎙️  ▶ Lượt 6 — có tiếng nói
+🔇  ■ Lượt 6 — im lặng, hết lượt (1.9s nói)
+🇻🇳 STT    Em mừng em
+🇨🇳 DỊCH   我喜欢你.   #024 · 2.1s nói · 0.32s xử lý (STT 196ms + dịch 128ms)
+
+🎙️  ▶ Lượt 7 — có tiếng nói
+🇻🇳 STT    Dạ vâng thì ý là là nó sẽ chia dựa theo gọi là
+🇨🇳 DỊCH   这意味着它将根据所谓的   #025 · 5.2s nói · 0.75s xử lý (STT 463ms + dịch 286ms)
+🇻🇳 STT    Thời gian thực luôn thì nghĩa là chị nói ra chị nói tới đâu là nó sẽ mất là nó sẽ
+🇨🇳 DỊCH   实时意味着你告诉我它在哪里会消失.   #026 · 4.6s nói · 0.75s xử lý (STT 418ms + dịch 332ms)
+🔇  ■ Lượt 7 — im lặng, hết lượt (9.8s nói)
+🇻🇳 STT    Chia câu đến đấy
+🇨🇳 DỊCH   在这里.   #027 · 0.7s nói · 0.22s xử lý (STT 89ms + dịch 131ms)
+
+🎙️  ▶ Lượt 8 — có tiếng nói
+🇻🇳 STT    Thì cái việc này thì là thay vì á là bây giờ là chị nói xong một cái cục siêu
+🇨🇳 DỊCH   而不是说,现在我已经完成了一个超级任务了.   #028 · 4.8s nói · 0.74s xử lý (STT 422ms + dịch 316ms)
+🇻🇳 STT    To như này chị đưa cho cái máy dịch thì máy dịch nó sẽ phải nhận diện
+🇨🇳 DỊCH   你把这么多钱给了翻译机,翻译机就会识别它.   #029 · 5.0s nói · 0.99s xử lý (STT 474ms + dịch 516ms)
+🇻🇳 STT    Nó sẽ phải giải quyết nguyên cục này thì bây giờ là nó sẽ giảm
+🇨🇳 DỊCH   它必须解决这个问题,现在它会减少.   #030 · 4.8s nói · 0.66s xử lý (STT 415ms + dịch 241ms)
+🇻🇳 STT    Giải quyết song song trong cái thời gian chị đang nói luôn là một cục nhỏ như này là một câu này đó
+🇨🇳 DỊCH   在这段时间里,平行解决问题总是像这样的小部分.   #031 · 4.4s nói · 0.74s xử lý (STT 350ms + dịch 386ms)
+🔇  ■ Lượt 8 — im lặng, hết lượt (22.2s nói)
+🇻🇳 STT    Xong thế là đấy nó lại nghe thêm cái câu tiếp theo
+🇨🇳 DỊCH   他又听了下一个句子.   #032 · 3.5s nói · 0.55s xử lý (STT 335ms + dịch 218ms)
+
+🎙️  ▶ Lượt 9 — có tiếng nói
+🔇  ■ Lượt 9 — im lặng, hết lượt (0.1s nói)
+
+🎙️  ▶ Lượt 10 — có tiếng nói
+🇻🇳 STT    Dạ đúng rồi đúng rồi nghĩa là cái đấy là là nó sẽ chạy song song với nhau cái chuyện gì
+🇨🇳 DỊCH   ,,,,,,,,,,,,.   #033 · 4.0s nói · 0.83s xử lý (STT 312ms + dịch 517ms)
+🇻🇳 STT    Với lại là nghe nó sẽ song song với nhau đó thì sau khi có sách mentor này
+🇨🇳 DỊCH   除此之外,我听到它会在这本指导书之后.   #034 · 6.0s nói · 0.83s xử lý (STT 480ms + dịch 354ms)
+🇻🇳 STT    Thì sẽ gọi là có cái một cái mô hình ai là
+🇨🇳 DỊCH   现在我们需要一个模型.   #035 · 4.9s nói · 0.55s xử lý (STT 376ms + dịch 175ms)
+🔇  ■ Lượt 10 — im lặng, hết lượt (16.5s nói)
+
+🎙️  ▶ Lượt 11 — có tiếng nói
+🇻🇳 STT    Gọi là spec toét
+🇨🇳 DỊCH   这叫做强度指标.   #036 · 1.9s nói · 0.39s xử lý (STT 203ms + dịch 184ms)
+🇻🇳 STT    Sờ pick to tex thì nghĩa là cái này là nó sẽ
+🇨🇳 DỊCH   触摸Pick to Tex意味着这是它会   #037 · 6.1s nói · 0.69s xử lý (STT 433ms + dịch 256ms)
+🇻🇳 STT    Nghe tiếng của chị và sau đấy là viết lại nhưng nó dạ đúng rồi
+🇨🇳 DỊCH   听到你的声音,然后再写了,但这是真的.   #038 · 5.5s nói · 0.81s xử lý (STT 471ms + dịch 338ms)
+🇻🇳 STT    Nó là phụ đề thôi nó chỉ là cái phụ đề và sau khi có cái phụ đề này rồi
+🇨🇳 DỊCH   它只是一个字幕,它只是一个字幕,然后是这个字幕.   #039 · 5.2s nói · 0.80s xử lý (STT 453ms + dịch 344ms)
+🇻🇳 STT    Thì đơn giản là dịch thôi dạ vâng thì cái dịch này trừ tiền thịt thì nó sẽ
+🇨🇳 DỊCH   简单地说是催眠术.   #040 · 5.8s nói · 0.82s xử lý (STT 514ms + dịch 304ms)
+🇻🇳 STT    Dịch đấy là test cotest nghĩa là trang mạng dạ đúng rồi
+🇨🇳 DỊCH   这就是测试测试,这意味着网页正确.   #041 · 8.2s nói · 0.92s xử lý (STT 629ms + dịch 286ms)
+🇻🇳 STT    Đấy thì hiện tại là cái pi lai gọi là cái lõi là bọn em đang làm là
+🇨🇳 DỊCH   现在,我们正在做的是这个叫做核心的饼.   #042 · 4.5s nói · 0.97s xử lý (STT 552ms + dịch 416ms)
+🇻🇳 STT    Chỗ này thì là cái giá trị bọn em làm được gọi là xa khác so với lại những bên khác thì chủ yếu là
+🇨🇳 DỊCH   这里,我们所做的价值远不同于其他方面,主要是   #043 · 5.0s nói · 0.78s xử lý (STT 391ms + dịch 387ms)
+🇻🇳 STT    Cái này nó sẽ siêu nhẹ và có thể là chạy trên một cái thiết bị cầm tay nhỏ
+🇨🇳 DỊCH   这将是超轻的,也许可以运行在一个小的手动设备上.   #044 · 4.4s nói · 0.78s xử lý (STT 385ms + dịch 391ms)
+🔇  ■ Lượt 11 — im lặng, hết lượt (44.8s nói)
+
+🎙️  ▶ Lượt 12 — có tiếng nói
+🇻🇳 STT    Internet
+🇨🇳 DỊCH   互联网   #045 · 0.5s nói · 0.20s xử lý (STT 88ms + dịch 112ms)
+🔇  ■ Lượt 12 — im lặng, hết lượt (9.4s nói)
+
+🎙️  ▶ Lượt 13 — có tiếng nói
+🇻🇳 STT    Thì cái thiết bị này nó sẽ rơi vào khoảng là hai gram
+🇨🇳 DỊCH   这种设备将会降低2克左右.   #047 · 2.8s nói · 0.44s xử lý (STT 235ms + dịch 205ms)
+🇻🇳 STT    Thì hai ghi ram là chạy được toàn bộ chứ không cần phải là thêm thiết bị khác
+🇨🇳 DỊCH   两次拉姆是完全运行,而不需要其他设备.   #048 · 4.9s nói · 0.69s xử lý (STT 375ms + dịch 311ms)
+🇻🇳 STT    Bọn em sẽ có những cái kit gọi là có những cái kit chuyên dụng đấy là
+🇨🇳 DỊCH   我们将拥有所谓的专用设备.   #049 · 5.6s nói · 0.70s xử lý (STT 476ms + dịch 224ms)
+🇻🇳 STT    Nó có nó có sẵn hai ghi ra thì bạn sẽ nạp chương trình vào đấy và gọi là cái thiết bị đấy là
+🇨🇳 DỊCH   如果它有两个记录,那么你就会把程序放到里面,叫这个设备.   #050 · 4.8s nói · 0.88s xử lý (STT 422ms + dịch 459ms)
+🇻🇳 STT    Nó chỉ dùng cho cái tác vụ đó nữa thôi mà
+🇨🇳 DỊCH   他只是为了这份任务.   #051 · 6.8s nói · 0.67s xử lý (STT 518ms + dịch 148ms)
+🇻🇳 STT    Sau đấy thì là khi mà dịch ra đồ thì đến đoạn này nó sẽ là hiển thị ra màn hình
+🇨🇳 DỊCH   接下来,当我们把东西转换到这个阶段时,它就会显示屏幕.   #052 · 4.3s nói · 0.75s xử lý (STT 313ms + dịch 432ms)
+🇻🇳 STT    Hoặc là thành giọng nói hay sau đó thì cái đấy là mình sẽ tự
+🇨🇳 DỊCH   或是作为一个声音,或是作为一个声音.   #053 · 4.6s nói · 0.66s xử lý (STT 403ms + dịch 255ms)
+🇻🇳 STT    Quyết sau còn chủ yếu là bọn em là đang đào sâu vào cái này
+🇨🇳 DỊCH   最后的结论是,我们正在深入研究这个问题.   #054 · 4.6s nói · 0.65s xử lý (STT 360ms + dịch 288ms)
+🔇  ■ Lượt 13 — im lặng, hết lượt (39.6s nói)
+
+🎙️  ▶ Lượt 14 — có tiếng nói
+🇻🇳 STT    Mô hình trước đúng không dạ vâng giải quyết cái ví dụ dịch trước
+🇨🇳 DỊCH   之前的模式是不是不对的,解决了之前的例子   #055 · 4.4s nói · 0.67s xử lý (STT 326ms + dịch 346ms)
+🇻🇳 STT    Trước hết là chị có hỗ trợ lấy thông tin cho chị hỏi em
+🇨🇳 DỊCH   首先,我有助于你得到信息.   #056 · 6.8s nói · 0.81s xử lý (STT 575ms + dịch 230ms)
+🇻🇳 STT    Lúc đó là chỉ có văn đó thôi hay là có tự xét thêm không có
+🇨🇳 DỊCH   在那个时候,只有这篇文章,或者没有任何自我判断.   #057 · 5.7s nói · 1.00s xử lý (STT 639ms + dịch 362ms)
+🇻🇳 STT    Đây là việt nam dạ thì cái thứ nhất là về cái datace
+🇨🇳 DỊCH   这里是越南,第一个是关于数据.   #058 · 5.8s nói · 0.66s xử lý (STT 429ms + dịch 231ms)
+🇻🇳 STT    Đúng không cái data ấy thì là cái data kia có dùng dùng
+🇨🇳 DỊCH   不是,那个数据是其他数据的数据.   #059 · 5.3s nói · 0.71s xử lý (STT 457ms + dịch 253ms)
+🇻🇳 STT    Chủ yếu nhưng mà nghĩa là khi mà bọn em làm một cái mô hình á thì là bọn em sẽ
+🇨🇳 DỊCH   基本上,但这意味着当我们做一个模型时,我们会   #060 · 4.7s nói · 0.82s xử lý (STT 432ms + dịch 389ms)
+🇻🇳 STT    Đi kiếm một cái mô hình có sẵn trên mạng nghĩa là kiểu là người ta người ta đã từng làm một cái
+🇨🇳 DỊCH   在网上寻找一个模型意味着人们曾经做过一个.   #061 · 4.4s nói · 0.65s xử lý (STT 336ms + dịch 314ms)
+🇻🇳 STT    Mô hình dịch như thế này rồi nhưng mà nó chưa tốt nghĩa là em lấy cái mô hình đó về em cải tạo lại cho nên là
+🇨🇳 DỊCH   这种模型已经出现了,但它不太好,这意味着我把我改造的模型改进了.   #062 · 6.1s nói · 0.95s xử lý (STT 458ms + dịch 488ms)
+🇻🇳 STT    Qa đầu vào nó sẽ phụ thuộc vào qatar nó sẽ phụ thuộc vào cái mà lấy đúng không có dùng nhưng mà lại sẽ lấy mô hình khác để cải tạo lại dạ đúng rồi
+🇨🇳 DỊCH   它将取决于卡塔尔,它将取决于它所使用的东西,但它将取决于它所使用的东西.   #063 · 11.1s nói · 1.38s xử lý (STT 796ms + dịch 580ms)
+🇻🇳 STT    Thì là thường cái mô hình khác là người ta đã gọi là đã chuyên cho một số những cái bài
+🇨🇳 DỊCH   通常,人们所说的另一种模式是专注于一些课件.   #064 · 4.4s nói · 0.75s xử lý (STT 375ms + dịch 377ms)
+🇻🇳 STT    Cơ bản nhất rồi thì là dịch những cái cơ bản nó sẽ dịch ok còn là cái data chị đưa cho bọn em ấy
+🇨🇳 DỊCH   最基本的内容是翻译,基本的内容是翻译的.   #065 · 4.8s nói · 0.70s xử lý (STT 367ms + dịch 335ms)
+🇻🇳 STT    Thì là bọn em sẽ làm cho nó dịch sao cho nghe ra hướng đấy là hướng đây là dịch du lịch nhất
+🇨🇳 DỊCH   所以我们要把它翻译,让它听到方向.   #066 · 4.0s nói · 0.67s xử lý (STT 351ms + dịch 322ms)
+🇻🇳 STT    Hiểu rồi đó có nghĩa là kế cái của chị luôn là để làm sao cho nó nghe nói chung là
+🇨🇳 DỊCH   我明白,这意味着你的后代总是为了让它听起来像   #067 · 5.3s nói · 0.76s xử lý (STT 419ms + dịch 337ms)
+🔇  ■ Lượt 14 — im lặng, hết lượt (74.5s nói)
+
+🎙️  ▶ Lượt 15 — có tiếng nói
+🇻🇳 STT    Cái kia là em sẽ lấy mô hình và một phần đang phán xét
+🇨🇳 DỊCH   另一个是,我拿着一个模型,一个部分是判断的.   #068 · 5.4s nói · 0.84s xử lý (STT 496ms + dịch 343ms)
+🇻🇳 STT    Dạ vâng cái thứ hai thì bây giờ bọn em đã có cả cả hai
+🇨🇳 DỊCH   第二个,现在我们有了两个.   #069 · 7.3s nói · 0.72s xử lý (STT 528ms + dịch 194ms)
+🇻🇳 STT    Chiều rồi là cả việt sang trung lẫn trung sang việt rồi
+🇨🇳 DỊCH   今天晚上,我们已经到中,到中.   #070 · 6.3s nói · 0.83s xử lý (STT 520ms + dịch 305ms)
+🇻🇳 STT    Tết thì em có lúc mà chị tết em
+🇨🇳 DỊCH   有时我会遇到你.   #071 · 6.2s nói · 0.74s xử lý (STT 504ms + dịch 235ms)
+🇻🇳 STT    Là chỉ là kiểm chứng chất lượng thôi còn bây giờ em vẫn còn chưa
+🇨🇳 DỊCH   这只是质量检查,现在我还没有.   #072 · 5.5s nói · 0.66s xử lý (STT 409ms + dịch 248ms)
+🇻🇳 STT    Biết là nên gửi cho chị test như thế nào bởi vì là bọn em chỉ có cốt ở đây chứ chưa có đóng
+🇨🇳 DỊCH   知道如何向你发送测试,因为我们只剩下子,没有关闭.   #073 · 4.3s nói · 0.76s xử lý (STT 341ms + dịch 418ms)
+🔇  ■ Lượt 15 — im lặng, hết lượt (29.9s nói)
+
+🎙️  ▶ Lượt 16 — có tiếng nói
+🇻🇳 STT    Thành ấy
+🇨🇳 DỊCH   这座城市.   #074 · 0.6s nói · 0.17s xử lý (STT 74ms + dịch 99ms)
+🇻🇳 STT    Bây giờ ý là chị có thể gặp em để test được không hoặc là tại vì cái đó
+🇨🇳 DỊCH   现在的意思是,我可以和你见面,   #075 · 7.4s nói · 0.98s xử lý (STT 678ms + dịch 303ms)
+🇻🇳 STT    Ví dụ như rửa qua bên dịch mở và sử dụng như thế nào thì chị có thể gặp em sử dụng được
+🇨🇳 DỊCH   举个例子,通过开放的翻译来洗和使用,你可能会遇到你使用的方法.   #076 · 6.8s nói · 0.98s xử lý (STT 480ms + dịch 498ms)
+🇻🇳 STT    Dạ thế thì hôm thứ bảy là
+🇨🇳 DỊCH   这就是星期六.   #077 · 6.2s nói · 0.60s xử lý (STT 437ms + dịch 165ms)
+🇻🇳 STT    Trước khi vào họp trong lá dạ được ạ hôm thứ bảy đấy em
+🇨🇳 DỊCH   在星期六的会议之前,   #078 · 4.9s nói · 0.67s xử lý (STT 386ms + dịch 279ms)
+🇻🇳 STT    Ok rồi ok chị hiểu rồi bây giờ cơ bản về bác chị sẽ cho em chị sẽ biết
+🇨🇳 DỊCH   好吧,好吧,我明白了. 基本上,我会告诉你.   #079 · 9.1s nói · 1.00s xử lý (STT 656ms + dịch 341ms)
+🇻🇳 STT    Mười loại văn cả tiếng hoa cả hoa và cả việt có nghĩa là mười loại khác nhau
+🇨🇳 DỊCH   十种文字,一类花,一类花,一类,都意味着十种不同的文字.   #080 · 7.1s nói · 0.99s xử lý (STT 533ms + dịch 459ms)
+🇻🇳 STT    Mười loại tí khoan mỗi loại nó sẽ là ba câu thôi sẽ nói cái câu đó và
+🇨🇳 DỊCH   每个10个小孔,只有3个句子.   #081 · 9.1s nói · 0.94s xử lý (STT 645ms + dịch 293ms)
+🔇  ■ Lượt 16 — im lặng, hết lượt (55.8s nói)
+
+🎙️  ▶ Lượt 17 — có tiếng nói
+🇻🇳 STT    Thì cái máy điện cam độ từng lập nó mới ra ngoài open tại vì nó là sự du lịch và du lịch
+🇨🇳 DỊCH   那么,光电器曾经设置它,因为它是旅游和旅游.   #083 · 10.0s nói · 1.31s xử lý (STT 863ms + dịch 449ms)
+🇻🇳 STT    Là hiểu ý là nó khớp nhau về khí hậu rồi chị sẽ làm tương tự như vậy cho việc nước hoa
+🇨🇳 DỊCH   这意味着气候是合适的,我也会对香水做同样的事情.   #084 · 6.8s nói · 0.87s xử lý (STT 485ms + dịch 388ms)
+🇻🇳 STT    Thì cũng sẽ có và mười bảy tiếng việt thì sẽ nói ít người truyền qua tiếng hoa dạ vâng
+🇨🇳 DỊCH   也会有十七个声,只有少数人会通过语说,   #085 · 8.5s nói · 1.00s xử lý (STT 633ms + dịch 370ms)
+🇻🇳 STT    Chị sẽ có mười bạn như vậy thì sắp xếp đó và chị sẽ ghi nhận xem là nó đang làm tốt cái vấn đề gì kiểu ví dụ như là
+🇨🇳 DỊCH   你会有10个这样的朋友,然后把它安排起来,然后你会注意到它正在做得很好.   #086 · 7.9s nói · 1.07s xử lý (STT 562ms + dịch 504ms)
+🇻🇳 STT    Ngữ nghĩa pháp về các thành tố chất mang lại không có tốt sẽ tinh chỉnh theo cái
+🇨🇳 DỊCH   对于不良物质来说的法语词汇将根据   #087 · 10.8s nói · 1.14s xử lý (STT 789ms + dịch 349ms)
+🇻🇳 STT    Trong một texa ba là kiểu tiếng anh kêu là chị nghĩ là nó dễ ít nhất sáu
+🇨🇳 DỊCH   在一个"三"字母中,我觉得至少有六个.   #088 · 10.0s nói · 1.46s xử lý (STT 1040ms + dịch 418ms)
+🇻🇳 STT    Xấu rồi thì nó mới cố thành được thì thấy là mấy cái cơ bản này nó dễ thì đó là cái cách mà
+🇨🇳 DỊCH   很糟糕,当他试图做到这一点时,他会发现这些基本点是很容易的.   #089 · 10.9s nói · 1.85s xử lý (STT 1326ms + dịch 520ms)
+🇻🇳 STT    Chị sẽ test cái này thì cũng bật ý thầy năm giờ đúng không dạ em chưa check lại lịch đó
+🇨🇳 DỊCH   如果我测试这个,我也会提醒你,五个小时.   #090 · 7.8s nói · 1.09s xử lý (STT 675ms + dịch 414ms)
+🇻🇳 STT    Xem lại ừ ok thì chị sẽ tới sớm trước ba mươi phút nha rồi chị sẽ gọi em để test một là
+🇨🇳 DỊCH   我会提前到30分钟,然后我会给你打电话来测试一.   #091 · 8.4s nói · 1.03s xử lý (STT 629ms + dịch 406ms)
+🇻🇳 STT    Hai chị với nhau xong rồi chị sẽ ngồi list ra hay là có vấn đề gì về
+🇨🇳 DỊCH   你和我结婚后,我会坐下来,或者有什么问题.   #092 · 8.4s nói · 0.95s xử lý (STT 620ms + dịch 331ms)
+🇻🇳 STT    Về dịch hay không sau đó sẽ nói chuyện với nhau trong dạ vâng ạ về cơ bản là cái này nó cũng
+🇨🇳 DỊCH   无论是翻译还是不翻译,我们都会在肚子里聊天.   #093 · 9.0s nói · 1.08s xử lý (STT 691ms + dịch 389ms)
+🇻🇳 STT    Thì cái phần mà chị tích thì chị có thể gửi bên em trước em có thể đọc thử
+🇨🇳 DỊCH   我可以把你留下的部分送给我,然后我可以试看.   #094 · 8.2s nói · 1.00s xử lý (STT 672ms + dịch 326ms)
+🔇  ■ Lượt 17 — im lặng, hết lượt (108.7s nói)
+🇻🇳 STT    Nó dịch như thế nào rồi bắt đầu
+🇨🇳 DỊCH   翻译是什么意思?   #095 · 2.4s nói · 0.39s xử lý (STT 218ms + dịch 171ms)
+
+🎙️  ▶ Lượt 18 — có tiếng nói
+🇻🇳 STT    Các bạn tiếp tân dạ xem lại cái tốc độ phản hồi với lại là cái ngữ nghĩa nó có
+🇨🇳 DỊCH   您可以再看看它的反应速度,再看看它的含义.   #096 · 8.0s nói · 0.95s xử lý (STT 617ms + dịch 332ms)
+🇻🇳 STT    Học chỉ vậy thôi ok rồi chị sẽ ráng sửa lại cho bác sớm mấy cái đoạn đó là
+🇨🇳 DỊCH   你只需要学习,好吧,我会很快给你修复这些.   #097 · 7.0s nói · 1.00s xử lý (STT 627ms + dịch 371ms)
+🇻🇳 STT    Để bắt rồi nếu như mà được hẹn cứ tới tiếng việt để tiếng hoa rồi xong rồi hai loại giống nhau hay cách
+🇨🇳 DỊCH   如果有约会,那么就算是了,两种都是一样的.   #098 · 8.3s nói · 0.99s xử lý (STT 623ms + dịch 371ms)
+🔇  ■ Lượt 18 — im lặng, hết lượt (26.0s nói)
+
+🎙️  ▶ Lượt 19 — có tiếng nói
+🇻🇳 STT    Tại sao thời gian ha con không có thời gian con sẽ gửi nó lên
+🇨🇳 DỊCH   我为什么没有时间发送它?   #099 · 4.1s nói · 0.60s xử lý (STT 382ms + dịch 216ms)
+🇻🇳 STT    Dạ vâng ạ dạ vâng ạ cảm ơn em cảm ơn chị
+🇨🇳 DỊCH   谢谢你.谢谢你.   #100 · 6.3s nói · 0.75s xử lý (STT 543ms + dịch 209ms)
+🔇  ■ Lượt 19 — im lặng, hết lượt (8.3s nói)
+
+🎙️  ▶ Lượt 20 — có tiếng nói
+🔇  ■ Lượt 20 — im lặng, hết lượt (5.0s nói)
+
+🎙️  ▶ Lượt 21 — có tiếng nói
+🔇  ■ Lượt 21 — im lặng, hết lượt (0.9s nói)
+🇻🇳 STT    Thế rồi
+🇨🇳 DỊCH   这就是这样.   #103 · 1.5s nói · 0.33s xử lý (STT 185ms + dịch 147ms)
+
+🎙️  ▶ Lượt 22 — có tiếng nói
+🔇  ■ Lượt 22 — im lặng, hết lượt (0.4s nói)
+
+🎙️  ▶ Lượt 23 — có tiếng nói
+🇻🇳 STT    Xin chào
+🇨🇳 DỊCH   您好.   #104 · 0.7s nói · 0.20s xử lý (STT 88ms + dịch 108ms)
+🔇  ■ Lượt 23 — im lặng, hết lượt (0.6s nói)
+🇨🇳 STT    可以。
+🇻🇳 DỊCH   Được rồi.   #105 · 0.8s nói · 0.22s xử lý (STT 110ms + dịch 106ms)
+
+🎙️  ▶ Lượt 24 — có tiếng nói
+🔇  ■ Lượt 24 — im lặng, hết lượt (0.8s nói)
+🇻🇳 STT    Ai dạ
+🇨🇳 DỊCH   谁怀孕了   #106 · 1.0s nói · 0.23s xử lý (STT 109ms + dịch 122ms)
+
+🎙️  ▶ Lượt 25 — có tiếng nói
+🔇  ■ Lượt 25 — im lặng, hết lượt (0.7s nói)
+🇻🇳 STT    Chị thanh minh
+🇨🇳 DỊCH   我是一个纯洁的女人.   #107 · 0.9s nói · 0.32s xử lý (STT 115ms + dịch 204ms)
+
+🎙️  ▶ Lượt 26 — có tiếng nói
+🔇  ■ Lượt 26 — im lặng, hết lượt (1.6s nói)
+🇻🇳 STT    Khó hiểu mệt thôi
+🇨🇳 DỊCH   很难理解.   #108 · 1.7s nói · 0.31s xử lý (STT 187ms + dịch 124ms)
+
+🎙️  ▶ Lượt 27 — có tiếng nói
+🇨🇳 STT    你睇个你就唔。
+🇻🇳 DỊCH   Nếu bạn nhìn thấy nó, bạn sẽ không thấy nó.   #109 · 7.2s nói · 0.81s xử lý (STT 572ms + dịch 238ms)
+🔇  ■ Lượt 27 — im lặng, hết lượt (9.1s nói)
+🇻🇳 STT    Nói chung là hôm nay phải chiều thầy hay mệ
+🇨🇳 DỊCH   总的来说,今天是晚上.   #110 · 2.1s nói · 0.46s xử lý (STT 197ms + dịch 258ms)
+
+🎙️  ▶ Lượt 28 — có tiếng nói
+🇻🇳 STT    Ông thầy chứ trẻ con thầy cứ
+🇨🇳 DỊCH   你的老师,你的孩子.   #111 · 6.1s nói · 0.70s xử lý (STT 498ms + dịch 200ms)
+🇻🇳 STT    Làm theo ý tôi xong rồi đéo hiểu ông mất ba chục phút để mà điền
+🇨🇳 DỊCH   按照我的建议完成了,你需要30分钟才能填写.   #112 · 5.5s nói · 0.81s xử lý (STT 462ms + dịch 349ms)
+🔇  ■ Lượt 28 — im lặng, hết lượt (14.4s nói)
+🇻🇳 STT    Hai trang tài liệu vớ vẩn
+🇨🇳 DỊCH   两页的废话文件   #113 · 3.0s nói · 0.43s xử lý (STT 274ms + dịch 156ms)
+
+🎙️  ▶ Lượt 29 — có tiếng nói
+🇻🇳 STT    Mà anh điền cái hồ sơ đi thi thôi và cái tài liệu đấy
+🇨🇳 DỊCH   我填写了考试表格和文件.   #114 · 4.4s nói · 0.70s xử lý (STT 398ms + dịch 297ms)
+🔇  ■ Lượt 29 — im lặng, hết lượt (9.4s nói)
+
+🎙️  ▶ Lượt 30 — có tiếng nói
+🇻🇳 STT    Anh nghĩ là anh điền trong mẹ mười lăm phút là xong hết phun bảy phần đèo mẹ
+🇨🇳 DỊCH   我认为你在15分钟内满了七分钟.   #115 · 5.1s nói · 0.81s xử lý (STT 463ms + dịch 342ms)
+🔇  ■ Lượt 30 — im lặng, hết lượt (3.8s nói)
+🇻🇳 STT    Để làm cái đéo gì một tốn thời gian mình trước thời gian mình thì đã ít rồi
+🇨🇳 DỊCH   一个要提前花时间做什么都不够了.   #116 · 4.0s nói · 0.65s xử lý (STT 342ms + dịch 310ms)
+
+🎙️  ▶ Lượt 31 — có tiếng nói
+🇻🇳 STT    Ờ tối nay tối mai tối mốt
+🇨🇳 DỊCH   今晚晚,明天晚上.   #117 · 4.7s nói · 0.60s xử lý (STT 390ms + dịch 209ms)
+🔇  ■ Lượt 31 — im lặng, hết lượt (5.2s nói)
+
+🎙️  ▶ Lượt 32 — có tiếng nói
+🇻🇳 STT    Mày thích ăn rồi ừ tao biết rồi
+🇨🇳 DỊCH   你喜欢吃,我知道.   #119 · 2.2s nói · 0.43s xử lý (STT 220ms + dịch 208ms)
+🔇  ■ Lượt 32 — im lặng, hết lượt (8.8s nói)
+🇻🇳 STT    Nam bữa nay bận quá chết rồi sao xếp lịch được ta dồ hết mẹ lịch vào ngày một tuần này
+🇨🇳 DỊCH   今晚晚的午餐太忙了,为什么要安排一周的时间?   #120 · 5.7s nói · 0.92s xử lý (STT 469ms + dịch 452ms)
+
+🎙️  ▶ Lượt 33 — có tiếng nói
+🔇  ■ Lượt 33 — im lặng, hết lượt (2.2s nói)
+
+🎙️  ▶ Lượt 34 — có tiếng nói
+🔇  ■ Lượt 34 — im lặng, hết lượt (0.7s nói)
+🇻🇳 STT    Ồ
+🇨🇳 DỊCH   !   #122 · 0.9s nói · 0.26s xử lý (STT 118ms + dịch 139ms)
+
+🎙️  ▶ Lượt 35 — có tiếng nói
+🔇  ■ Lượt 35 — im lặng, hết lượt (1.9s nói)
+
+🎙️  ▶ Lượt 36 — có tiếng nói
+🔇  ■ Lượt 36 — im lặng, hết lượt (4.3s nói)
+
+🎙️  ▶ Lượt 37 — có tiếng nói
+🔇  ■ Lượt 37 — im lặng, hết lượt (2.1s nói)
+
+🎙️  ▶ Lượt 38 — có tiếng nói
+🔇  ■ Lượt 38 — im lặng, hết lượt (0.2s nói)
+
+🎙️  ▶ Lượt 39 — có tiếng nói
+🔇  ■ Lượt 39 — im lặng, hết lượt (2.3s nói)
+
+🎙️  ▶ Lượt 40 — có tiếng nói
+🔇  ■ Lượt 40 — im lặng, hết lượt (1.7s nói)
+
+🎙️  ▶ Lượt 41 — có tiếng nói
+🇻🇳 STT    Chắc uống rượu
+🇨🇳 DỊCH   可能是喝酒.   #128 · 1.8s nói · 0.32s xử lý (STT 181ms + dịch 143ms)
+🇻🇳 STT    Lấy rượu uống nãy buồn nãy chán về
+🇨🇳 DỊCH   喝酒的时候,我很厌倦了.   #129 · 5.4s nói · 0.69s xử lý (STT 449ms + dịch 238ms)
+🔇  ■ Lượt 41 — im lặng, hết lượt (8.7s nói)
+🇻🇳 STT    Nhà tặt ngang tập ngang thập hoá lỡ mua chai rượu mơ về
+🇨🇳 DỊCH   一个酒店,错过了酒瓶的梦想.   #130 · 3.6s nói · 0.74s xử lý (STT 381ms + dịch 357ms)
+
+🎙️  ▶ Lượt 42 — có tiếng nói
+🔇  ■ Lượt 42 — im lặng, hết lượt (0.2s nói)
+
+🎙️  ▶ Lượt 43 — có tiếng nói
+🔇  ■ Lượt 43 — im lặng, hết lượt (1.7s nói)
+🇻🇳 STT    Nữa cái đéo vậy tao uống lúc nào mà nữa mày
+🇨🇳 DỊCH   我什么时候会喝下来?   #131 · 1.9s nói · 0.47s xử lý (STT 182ms + dịch 290ms)
+
+🎙️  ▶ Lượt 44 — có tiếng nói
+🇨🇳 STT    呀呀啲度飞嚟啊路扑你啦。
+🇻🇳 DỊCH   Này! Này! Này! Này!   #132 · 5.4s nói · 0.70s xử lý (STT 446ms + dịch 252ms)
+  ⚠️  Model không đọc được ký tự: 扑 — thêm luật vào onevoice/data/zh_unk_map.json
+🇻🇳 STT    Bị ép bia ta nôn nó hết rồi ta nôn ta nôn tới bữa
+🇨🇳 DỊCH   酒让我了,然后我了.   #133 · 5.1s nói · 0.84s xử lý (STT 477ms + dịch 359ms)
+🇻🇳 STT    Trưa của ngày hôm qua luôn á chứ đừng có bảo là có khiếp gì hay là bị
+🇨🇳 DỊCH   昨天的午餐总是烂的,不要说有什么可怕的东西.   #134 · 4.7s nói · 0.80s xử lý (STT 402ms + dịch 400ms)
+🇻🇳 STT    Giới thiệu gì nhé hôm đấy tao uống vang đà lạt rất ngon vang đà lạt của chú rất
+🇨🇳 DỊCH   那天我喝了一杯酒. 大叻很好.   #135 · 5.7s nói · 0.86s xử lý (STT 497ms + dịch 362ms)
+🔇  ■ Lượt 44 — im lặng, hết lượt (24.6s nói)
+🇻🇳 STT    Rất ngon lộc bà để lại xong tí nữa tao lôn sạch lồng luôn
+🇨🇳 DỊCH   很好吃,你让我干净了.   #136 · 4.0s nói · 0.71s xử lý (STT 340ms + dịch 372ms)
+
+🎙️  ▶ Lượt 45 — có tiếng nói
+🇻🇳 STT    Ăn dỗ mà em ăn dỗ mà thì đấy là rượu cúng hết mang xuống
+🇨🇳 DỊCH   我吃的子,就是酒.   #137 · 5.7s nói · 0.67s xử lý (STT 443ms + dịch 228ms)

@@ -98,7 +98,7 @@ class OneVoicePipeline(object):
         # Thống kê để đánh giá thiết bị chạy có kịp không
         self.stats = {"segments": 0, "dropped": 0, "translated": 0,
                       "stt_empty": 0, "errors": 0, "unknown_lang": 0,
-                      "too_short": 0}
+                      "too_short": 0, "mt_degenerate": 0}
 
     # ── Khởi động / dừng ────────────────────────────────────────────────────
     def run(self):
@@ -203,6 +203,16 @@ class OneVoicePipeline(object):
                 "   %d mẩu <%.1fs bị bỏ (Segmenter cắt vụn). Nếu mất cả câu trả "
                 "lời ngắn thật thì hạ --min-utterance."
                 % (self.stats["too_short"], self.config.min_utterance_s))
+        # Ba con số dưới đây từng bị đếm mà không in ra — xem chú thích ở _process.
+        if self.stats["stt_empty"] or self.stats["unknown_lang"]:
+            self.display.show_status(
+                "   %d câu STT không ra chữ · %d câu không rõ tiếng nào. Nhiều "
+                "bất thường → mic thu lẫn tiếng ồn, đo lại scripts/diag_vad.py."
+                % (self.stats["stt_empty"], self.stats["unknown_lang"]))
+        if self.stats["mt_degenerate"]:
+            self.display.show_status(
+                "   %d câu máy dịch trả về chuỗi vô nghĩa (đã hiện nguyên văn "
+                "STT thay thế)." % self.stats["mt_degenerate"])
         if self.stats["dropped"]:
             self.display.show_status(
                 "   ⚠️  Có câu bị bỏ → thiết bị xử lý không kịp tốc độ nói. "
@@ -263,9 +273,18 @@ class OneVoicePipeline(object):
 
     def _process(self, item):
         # ── STT ──────────────────────────────────────────────────────────
+        #
+        # Hai nhánh bỏ câu dưới đây PHẢI in ra một dòng. Trước đây chúng chỉ tăng
+        # bộ đếm rồi `return`, mà bộ đếm lại không có trong dòng 📊 lúc dừng →
+        # câu biến mất hoàn toàn: số thứ tự nhảy 045 → 047 và người dùng không có
+        # cách nào biết máy đã nghe mà không hiểu, hay máy đã treo. Đo thật:
+        # phiên 99 câu trên mic DGM20 mất trắng #046 và #082 kiểu này.
         stt_res = self.stt.transcribe(item.audio, item.sample_rate)
         if stt_res is None or stt_res.is_empty:
             self.stats["stt_empty"] += 1
+            self.display.show_status(
+                "⚪ #%03d · %.1fs — STT không nghe ra chữ nào, bỏ câu"
+                % (item.seq, item.duration_s))
             return
 
         # ── Chọn chiều dịch: ép cứng > lang của STT > đoán theo hệ chữ ────
@@ -273,6 +292,9 @@ class OneVoicePipeline(object):
         if src is None:
             # Câu chỉ có số/dấu câu — dịch cũng vô nghĩa, bỏ còn hơn dịch bừa.
             self.stats["unknown_lang"] += 1
+            self.display.show_status(
+                "⚪ #%03d · %.1fs — không xác định được tiếng nào (%s), bỏ câu"
+                % (item.seq, item.duration_s, stt_res.text[:40]))
             return
 
         # ── Dịch ─────────────────────────────────────────────────────────
@@ -280,6 +302,15 @@ class OneVoicePipeline(object):
         self.stats["translated"] += 1
 
         warnings = []
+        # Máy dịch nhả chuỗi chỉ có dấu câu → hiện nguyên văn STT. Người nghe
+        # đọc được câu gốc còn hơn đọc ",,,,,,,,,,,,." và tưởng thiết bị hỏng.
+        target_text = mt.target
+        if mt.degenerate:
+            self.stats["mt_degenerate"] += 1
+            target_text = stt_res.text
+            warnings.append(
+                "Máy dịch chỉ nhả dấu câu (%s) — đang hiện nguyên văn STT"
+                % mt.target[:16])
         if mt.unk_chars:
             # Model KHÔNG nhìn thấy các ký tự này → bản dịch có thể mất nghĩa.
             warnings.append(
@@ -291,7 +322,7 @@ class OneVoicePipeline(object):
         self.display.show(DisplayEvent(
             seq=item.seq,
             source_text=stt_res.text,
-            target_text=mt.target,
+            target_text=target_text,
             src_lang=mt.src_lang,
             tgt_lang=mt.tgt_lang,
             audio_duration_s=item.duration_s,

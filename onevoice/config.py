@@ -96,9 +96,21 @@ class TranslateConfig:
     # các số này chỉ để chặn trường hợp STT sinh output lặp vô hạn.
     max_input_tokens: int = 256
     max_decoding_length: int = 256
-    # 0 = tắt. Bật (vd 3) nếu thấy STT/MT lặp cụm từ; có thể hại tiếng Hoa nên
-    # mặc định để tắt, giống đúng cấu hình đã benchmark.
-    no_repeat_ngram_size: int = 0
+    # Bật = 3, ĐÃ ĐO, đừng hạ về 0 mà không đo lại.
+    #
+    # Trước đây để 0 vì lo hại tiếng Hoa. Đo trên 126 câu STT thật (mic DGM20,
+    # phiên 99 câu) + 14 câu bench của scripts/bench_translate.py:
+    #
+    #                          nrng=0    nrng=3
+    #   câu có cụm lặp >=4 ký tự   7        1
+    #   chuỗi chỉ có dấu câu       2        1
+    #   câu bench đổi output       —        0/14
+    #
+    # Nghĩa là dẹp 6/7 ca lặp mà không động tới bộ câu đã benchmark, và không
+    # phát sinh ca lặp mới. Ca còn lại là dương tính giả của bộ dò ("Nếu bạn
+    # nhìn thấy nó, bạn sẽ không thấy nó" — tiếng Việt hợp lệ).
+    # Đo lại: python scripts/bench_translate.py
+    no_repeat_ngram_size: int = 3
 
     # Hậu xử lý địa danh / tên riêng Hán-Việt cho chiều vi→zh.
     # NLLB phiên âm "Đà Nẵng" → 达南 thay vì 岘港; glossary sửa lại.
