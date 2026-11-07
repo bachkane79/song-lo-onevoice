@@ -1,30 +1,15 @@
 """Đo VAD trên mic thật — chạy TRƯỚC khi chỉnh tham số Segmenter.
 
-    python scripts/diag_vad.py
+    python scripts/diag_vad.py              # Phát câu mẫu qua loa ở Giai đoạn 2 (mặc định)
+    python scripts/diag_vad.py --mic-only   # Bạn tự nói vào micro ở Giai đoạn 2 (dùng khi đeo tai nghe)
 
 Đo hai giai đoạn và in ra bảng so sánh:
 
-    [1] Phòng yên  — không phát gì, 8 giây
-    [2] Đang nói   — phát một câu mẫu 5.6s qua loa
-
-Ba con số quyết định cách chỉnh Segmenter:
-
-* **VAD prob** — chênh lệch giữa hai giai đoạn càng lớn thì VAD càng đáng tin.
-  Median 0.03 (yên) vs 0.89 (nói) là rất tốt; nếu hai số xích lại gần nhau thì
-  phải nâng `--vad-threshold` hoặc xử lý tiếng ồn trước.
-
-* **Năng lượng** — quyết định tầng Energy Valley có dùng được không. Tầng đó
-  cắt câu khi `energy < valley_ratio * peak`, nên nó chỉ có nghĩa khi năng
-  lượng lúc im **thấp hơn hẳn** lúc nói. Nếu hai số xấp xỉ nhau (AGC đã san
-  phẳng dải động) thì không có `valley_ratio` nào chạy đúng — để tầng đó tắt.
-
-* **Chuỗi im lặng dài nhất** ở giai đoạn [2] — đây là cận dưới của
-  `--silence-timeout`. Đặt thấp hơn số này thì câu sẽ bị cắt giữa chừng.
-
-Chạy trên máy khác / mic khác thì đo lại: các mặc định trong
-`onevoice/config.py` chọn theo đúng bảng này trên mic Realtek của máy dev.
+    [1] Phòng yên  — giữ im lặng hoàn toàn (không nói gì)
+    [2] Đang nói   — phát câu mẫu 5.6s ra loa ngoài (hoặc bạn tự nói nếu dùng --mic-only)
 """
 
+import argparse
 import os
 import sys
 import threading
@@ -38,13 +23,30 @@ sys.path.insert(0, os.path.join(_REPO, "VAD-Segmenter"))
 
 SAMPLE_WAV = os.path.join(_REPO, "models", "stt", "sensevoice-zh",
                           "test_wavs", "zh.wav")
-QUIET_SECONDS = 8.0
+QUIET_SECONDS = 6.0
+SPEAK_SECONDS = 6.0
 FRAME_S = 512.0 / 16000.0
+_REAL_STDOUT = sys.stdout
+
+
+def _say(msg):
+    _REAL_STDOUT.write(msg + "\n")
+    _REAL_STDOUT.flush()
+
+
+def _countdown(label, seconds, probs):
+    for rem in range(int(seconds), 0, -1):
+        cur_p = probs[-1] if probs else 0.0
+        _REAL_STDOUT.write(f"\r   ⏳ {label}: còn {rem}s  (VAD prob tức thời: {cur_p:.3f})   ")
+        _REAL_STDOUT.flush()
+        time.sleep(1.0)
+    _REAL_STDOUT.write("\r" + " " * 72 + "\r")
+    _REAL_STDOUT.flush()
 
 
 def _summarize(tag, probs, energies, speech):
     if not probs:
-        print("%s  ❌ không nhận được frame nào" % tag)
+        _say("%s  ❌ không nhận được frame nào" % tag)
         return
     p, e, s = np.array(probs), np.array(energies), np.array(speech)
 
@@ -53,20 +55,49 @@ def _summarize(tag, probs, energies, speech):
         run = 0 if v else run + 1
         longest = max(longest, run)
 
-    print("%s  (%d frame)" % (tag, len(p)))
-    print("   VAD prob   : median %.3f | p90 %.3f | max %.3f"
-          % (np.median(p), np.percentile(p, 90), p.max()))
-    print("   Năng lượng : median %.5f | p90 %.5f | max %.5f"
-          % (np.median(e), np.percentile(e, 90), e.max()))
-    print("   is_speech  : %.1f%% số frame" % (100.0 * s.mean()))
-    print("   Chuỗi im lặng dài nhất: %d frame = %.2fs"
-          % (longest, longest * FRAME_S))
-    return {"prob_med": float(np.median(p)), "energy_med": float(np.median(e)),
-            "longest_silence_s": longest * FRAME_S}
+    # Để đo chuỗi im lặng BÊN TRONG câu nói (không tính khoảng im trước khi bắt đầu nói
+    # và sau khi đã nói xong), chỉ cắt từ frame có tiếng nói đầu tiên tới frame có tiếng nói cuối cùng
+    speech_idx = np.where(s)[0]
+    if len(speech_idx) >= 2:
+        inner_s = s[speech_idx[0]:speech_idx[-1] + 1]
+        inner_longest = inner_run = 0
+        for v in inner_s:
+            inner_run = 0 if v else inner_run + 1
+            inner_longest = max(inner_longest, inner_run)
+    else:
+        inner_longest = longest
+
+    _say("%s  (%d frame)" % (tag, len(p)))
+    _say("   VAD prob   : median %.3f | p90 %.3f | max %.3f"
+         % (np.median(p), np.percentile(p, 90), p.max()))
+    _say("   Năng lượng : median %.5f | p90 %.5f | max %.5f"
+         % (np.median(e), np.percentile(e, 90), e.max()))
+    _say("   is_speech  : %.1f%% số frame" % (100.0 * s.mean()))
+    _say("   Chuỗi im dài nhất (tổng / giữa câu): %.2fs / %.2fs"
+         % (longest * FRAME_S, inner_longest * FRAME_S))
+    return {
+        "prob_med": float(np.median(p)),
+        "energy_med": float(np.median(e)),
+        "longest_silence_s": inner_longest * FRAME_S,
+    }
 
 
 def main():
+    global _REAL_STDOUT
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _REAL_STDOUT = sys.stdout
+
+    ap = argparse.ArgumentParser(description="Đo VAD thực tế trên Micro")
+    ap.add_argument("--mic-only", action="store_true",
+                    help="Bạn tự nói vào micro ở Giai đoạn 2 thay vì phát file mẫu qua loa "
+                         "(bắt buộc dùng nếu bạn đang đeo tai nghe Headset)")
+    ap.add_argument("--device", type=int, default=None, help="ID thiết bị Micro")
+    args = ap.parse_args()
+
     from VAD_process import SileroVADDetector
+    from onevoice.mic import pick_input_device
+    from onevoice.vadlog import muted_stdout
 
     probs, energies, speech = [], [], []
 
@@ -75,63 +106,65 @@ def main():
         energies.append(float(np.sqrt(np.mean(chunk ** 2))))
         speech.append(bool(is_speech))
 
-    from onevoice.mic import pick_input_device
-    device_id, device_name = pick_input_device()
-    print("🎙️ Mic: [%d] %s\n" % (device_id, device_name))
+    device_id, device_name = pick_input_device(args.device)
+    _say("🎙️ Mic: [%d] %s" % (device_id, device_name))
 
-    vad = SileroVADDetector(threshold=0.35, device_id=device_id,
-                            on_vad_frame=collect)
-    threading.Thread(target=vad.start, daemon=True).start()
-    time.sleep(2.0)                      # bỏ qua lúc luồng audio ổn định
+    with muted_stdout(enabled=True):
+        vad = SileroVADDetector(threshold=0.35, device_id=device_id,
+                                on_vad_frame=collect)
+        threading.Thread(target=vad.start, daemon=True).start()
+        time.sleep(2.0)                  # bỏ qua lúc luồng audio ổn định
 
-    # ── [1] Phòng yên ────────────────────────────────────────────────────
-    print("\n🤫 Giai đoạn 1: GIỮ YÊN LẶNG trong %.0f giây..." % QUIET_SECONDS)
-    probs.clear(); energies.clear(); speech.clear()
-    time.sleep(QUIET_SECONDS)
-    quiet = (list(probs), list(energies), list(speech))
+        # ── [1] Phòng yên ────────────────────────────────────────────────
+        _say("\n[Giai đoạn 1/2] GIỮ YÊN LẶNG HOÀN TOÀN trong %.0f giây (Đừng nói gì)..."
+             % QUIET_SECONDS)
+        probs.clear(); energies.clear(); speech.clear()
+        _countdown("Đang đo phòng yên", QUIET_SECONDS, probs)
+        quiet = (list(probs), list(energies), list(speech))
+        _say("   ✓ Đã đo xong Giai đoạn 1 (Phòng yên).")
 
-    # ── [2] Đang nói ─────────────────────────────────────────────────────
-    print("🔊 Giai đoạn 2: đang phát câu mẫu qua loa...")
-    import soundfile as sf
-    import sounddevice as sd
+        # ── [2] Đang nói ─────────────────────────────────────────────────
+        if args.mic_only:
+            _say("\n[Giai đoạn 2/2] BÂY GIỜ BẠN HÃY NÓI LIÊN TỤC VÀO MICRO trong %.0f giây!"
+                 % SPEAK_SECONDS)
+            probs.clear(); energies.clear(); speech.clear()
+            _countdown("Đang thu giọng nói của bạn", SPEAK_SECONDS, probs)
+        else:
+            _say("\n[Giai đoạn 2/2] Đang phát câu mẫu tiếng Trung (zh.wav) qua loa...")
+            import soundfile as sf
+            import sounddevice as sd
 
-    audio, sr = sf.read(SAMPLE_WAV, dtype="float32")
-    audio = audio / max(1e-6, np.abs(audio).max()) * 0.95
-    probs.clear(); energies.clear(); speech.clear()
-    sd.play(audio, sr)
-    sd.wait()
-    loud = (list(probs), list(energies), list(speech))
+            audio, sr = sf.read(SAMPLE_WAV, dtype="float32")
+            audio = audio / max(1e-6, np.abs(audio).max()) * 0.95
+            probs.clear(); energies.clear(); speech.clear()
+            sd.play(audio, sr)
+            sd.wait()
 
-    vad.is_running = False
-    time.sleep(0.3)
+        loud = (list(probs), list(energies), list(speech))
+        _say("   ✓ Đã đo xong Giai đoạn 2 (Đang nói).")
 
-    print("\n" + "=" * 62)
+        vad.is_running = False
+        time.sleep(0.3)
+
+    _say("\n" + "=" * 62)
     q = _summarize("[1] PHÒNG YÊN", *quiet)
-    print()
+    _say("")
     l = _summarize("[2] ĐANG NÓI ", *loud)
-    print("=" * 62)
+    _say("=" * 62)
 
     if not (q and l):
         return 1
 
     # ── Kết luận ─────────────────────────────────────────────────────────
-    print("\n📌 Đọc kết quả:")
-    print("   • --silence-timeout phải > %.2fs (chuỗi im dài nhất trong câu), "
-          "hiện đặt 0.7s" % l["longest_silence_s"])
+    _say("\n📌 Đọc kết quả:")
+    _say("   • Khoảng nghỉ dài nhất GIỮA CÂU khi nói: %.2fs (cận dưới của silence_timeout)"
+         % l["longest_silence_s"])
 
     gap = l["energy_med"] / max(q["energy_med"], 1e-6)
-    if gap < 1.6:
-        print("   • Năng lượng lúc nói chỉ gấp %.2f lần lúc im → Energy Valley "
-              "KHÔNG dùng được\n     trên mic này (AGC đã san phẳng dải động). "
-              "Để mặc định tắt, đừng bật --energy-valley." % gap)
-    else:
-        print("   • Năng lượng lúc nói gấp %.2f lần lúc im → có thể thử "
-              "--energy-valley,\n     đặt --valley-ratio quanh %.2f."
-              % (gap, 0.5 * q["energy_med"] / max(l["energy_med"], 1e-6)))
-
-    if q["prob_med"] > 0.2:
-        print("   • Phòng khá ồn (prob median lúc im %.3f) → cân nhắc nâng "
-              "--vad-threshold" % q["prob_med"])
+    _say("   • Tỉ lệ Năng lượng (Nói / Im): gấp %.1f lần (%.5f vs %.5f)"
+         % (gap, l["energy_med"], q["energy_med"]))
+    _say("   • Tỉ lệ Xác suất VAD (Nói / Im): %.3f (nói) vs %.3f (im)"
+         % (l["prob_med"], q["prob_med"]))
     return 0
 
 

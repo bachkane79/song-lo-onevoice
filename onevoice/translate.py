@@ -38,6 +38,7 @@ from onevoice.config import (
     TranslateConfig,
 )
 from onevoice.glossary import Glossary
+from onevoice.vi_norm import ViSourceNormalizer
 from onevoice.zh_norm import ZhSourceNormalizer
 
 __all__ = ["NllbTranslator", "TranslationResult", "normalize_source"]
@@ -146,6 +147,7 @@ class NllbTranslator:
             if self.config.use_glossary else Glossary.empty()
         self.zh_norm = ZhSourceNormalizer.load(self.config.zh_unk_map_path) \
             if self.config.use_zh_unk_map else ZhSourceNormalizer.empty()
+        self.vi_norm = ViSourceNormalizer(enabled=True)
 
         if not lazy:
             self.load()
@@ -257,8 +259,11 @@ class NllbTranslator:
                 # Thay trước khi tokenize, nếu không model sẽ nhận <unk> và bỏ nghĩa.
                 clean, norm_hits = self.zh_norm.normalize(clean)
             else:
-                # Thay địa danh Việt bằng Hán tự ngay trong câu nguồn — model chép
-                # sang output. Không làm thế thì "Ninh Bình" ra 宁波 (Ninh Ba).
+                # 1. Khôi phục dấu câu (, . ?) cho câu STT tiếng Việt không dấu câu
+                #    và chuẩn hóa cụm khẩu ngữ dễ bị NLLB dịch word-by-word.
+                clean, _ = self.vi_norm.normalize(clean)
+                # 2. Thay địa danh Việt-Trung & món ăn bằng Hán tự (hoặc carrier) ngay
+                #    trong câu nguồn — model chép sang output rồi hậu xử lý về Hán tự chuẩn.
                 clean, glos_hits = self.glossary.apply_source(clean)
 
             enc = self._tokenizer.encode(clean, add_special_tokens=False)

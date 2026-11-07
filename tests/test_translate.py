@@ -157,6 +157,36 @@ class TestGlossary:
         assert g.lookup_vi("hà nội") == "河内"
         assert g.lookup_vi("Đà Nẵng") == "岘港"
 
+    def test_chinese_places_and_food_in_shipped_glossary(self):
+        g = Glossary.load(CFG.glossary_path)
+        assert g.lookup_vi("Thượng Hải") == "上海"
+        assert g.lookup_vi("Bắc Kinh") == "北京"
+        assert g.lookup_vi("vịt quay") == "烤鸭"
+        assert g.lookup_vi("bún bò") == "牛肉粉"
+
+
+class TestViNormalizer:
+    def test_restores_question_mark_for_unpunctuated_stt(self):
+        from onevoice.vi_norm import restore_vi_punctuation
+        out, n = restore_vi_punctuation("Bạn có biết nhà hàng nào nổi tiếng với món đó không")
+        assert out.endswith("?") and n >= 1
+
+    def test_restores_period_and_locative_comma(self):
+        from onevoice.vi_norm import restore_vi_punctuation
+        out, _ = restore_vi_punctuation("Ở việt nam chúng tôi có một món đặc sản đó chính là bún bò")
+        assert out == "Ở việt nam, chúng tôi có một món đặc sản, đó chính là bún bò."
+
+    def test_colloquial_chi_cho_toi_normalized(self):
+        from onevoice.vi_norm import restore_vi_punctuation
+        out, _ = restore_vi_punctuation("Bạn có thể chỉ cho tôi quán ăn ngon được không")
+        assert "giới thiệu cho tôi" in out
+        assert out.endswith("?")
+
+    def test_preserves_existing_punctuation(self):
+        from onevoice.vi_norm import restore_vi_punctuation
+        out, n = restore_vi_punctuation("Nhà vệ sinh ở đâu ạ?")
+        assert out == "Nhà vệ sinh ở đâu ạ?" and n == 0
+
 
 # ── Máy dịch (cần model) ────────────────────────────────────────────────────
 @needs_model
